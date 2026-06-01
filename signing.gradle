@@ -1,0 +1,17 @@
+def signingPropertiesFile = rootProject.file('local.properties')
+def signingProperties = new Properties()
+if (signingPropertiesFile.canRead()) {
+    signingProperties.load(new FileInputStream(signingPropertiesFile))
+}
+
+def signingValue = { key ->
+    signingProperties.getProperty(key) ?: System.getenv(key)
+}
+
+def storeFilePath = signingValue('SIGN_KEY_STORE_FILE')
+if (storeFilePath != null && !storeFilePath.isBlank()) {
+    android.signingConfigs.sign.storeFile file(storeFilePath)
+}
+android.signingConfigs.sign.storePassword signingValue('SIGN_KEY_STORE_PASSWORD')
+android.signingConfigs.sign.keyAlias signingValue('SIGN_KEY_ALIAS')
+android.signingConfigs.sign.keyPassword signingValue('SIGN_KEY_PASSWORD')

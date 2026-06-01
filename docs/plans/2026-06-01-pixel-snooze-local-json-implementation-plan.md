@@ -12,8 +12,8 @@
 
 ## 文件结构
 
-- 修改 `gradle/libs.versions.toml`：补充 Kotlin Android 插件、Koin 依赖和 AndroidX 测试 core。
-- 修改 `app/build.gradle.kts`：应用 Kotlin Android 插件，接入 Koin。
+- 修改 `gradle/libs.versions.toml`：补充 Koin 依赖和 AndroidX 测试 core。
+- 修改 `app/build.gradle.kts`：在现有统一 Gradle 模板中接入 Koin 和测试依赖。
 - 修改 `app/src/main/AndroidManifest.xml`：注册 Application 和通知监听服务。
 - 创建 `app/src/main/java/vip/mystery0/pixel/snooze/PixelSnoozeApplication.kt`：启动 Koin。
 - 创建 `app/src/main/java/vip/mystery0/pixel/snooze/di/AppModule.kt`：集中注册依赖。
@@ -29,86 +29,35 @@ Koin 版本选择说明：Koin 官方文档标注 4.2.x 需要 Kotlin 2.3+，当
 
 ---
 
-### Task 1: 配置 Gradle 依赖
+### Task 1: 补充首版功能依赖
 
 **Files:**
 - Modify: `gradle/libs.versions.toml`
 - Modify: `app/build.gradle.kts`
 
-- [ ] **Step 1: 修改版本目录**
+- [ ] **Step 1: 在版本目录补充 Koin 和测试依赖**
 
-将 `gradle/libs.versions.toml` 更新为包含以下新增项，保留现有版本号：
+在 `gradle/libs.versions.toml` 的现有统一模板基础上补充以下条目，不改动已集中管理的 app 版本、SDK 和签名配置：
 
 ```toml
 [versions]
-agp = "9.3.0-alpha09"
-coreKtx = "1.18.0"
-junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.13.0"
-kotlin = "2.2.10"
-composeBom = "2026.02.01"
 koin = "4.1.1"
 androidxTestCore = "1.5.0"
 
 [libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
-
-[plugins]
-android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ```
 
-- [ ] **Step 2: 修改 app Gradle 配置**
+- [ ] **Step 2: 在 app Gradle 配置中添加依赖**
 
-在 `app/build.gradle.kts` 中应用 Kotlin Android 插件，并添加依赖：
+在 `app/build.gradle.kts` 的 `dependencies` 块中添加：
 
 ```kotlin
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-}
-
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.koin.android)
 
-    testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
-
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
 }
 ```
 
@@ -122,7 +71,7 @@ Expected: 命令成功返回，能看到 `assemble`、`test` 等任务。
 
 ```bash
 git add gradle/libs.versions.toml app/build.gradle.kts
-git commit -m "chore: configure Kotlin and Koin dependencies"
+git commit -m "chore: add Koin and unit test dependencies"
 ```
 
 ---
