@@ -1,5 +1,6 @@
 package vip.mystery0.pixel.snooze.notification
 
+import android.app.Notification
 import android.app.PendingIntent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -22,10 +23,14 @@ class PixelSnoozeNotificationListenerService : NotificationListenerService() {
             return
         }
 
+        val title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)
+        val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)
+        Log.d(TAG, "onNotificationPosted: $title, $text")
+
         val keyword = preferencesRepository.keyword()
         if (!parser.matchesKeyword(notification, keyword)) return
 
-        if (!holidayRepository.isHolidayTomorrow()) {
+        if (!holidayRepository.isHoliday()) {
             Log.i(TAG, "Alarm keyword matched but tomorrow is not holiday")
             return
         }

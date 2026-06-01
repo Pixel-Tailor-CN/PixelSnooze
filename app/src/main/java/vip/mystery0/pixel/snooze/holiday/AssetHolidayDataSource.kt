@@ -1,6 +1,7 @@
 package vip.mystery0.pixel.snooze.holiday
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStream
 import java.time.LocalDate
@@ -19,13 +20,12 @@ class AssetHolidayDataSource(
             return HolidayCalendar(
                 year = json.getInt("year"),
                 holidays = json.getJSONArray("holidays").toDateSet(),
-                workdays = json.getJSONArray("workdays").toDateSet()
             )
         }
     }
 }
 
-private fun org.json.JSONArray.toDateSet(): Set<LocalDate> {
+private fun JSONArray.toDateSet(): Set<LocalDate> {
     return buildSet {
         for (index in 0 until length()) {
             add(LocalDate.parse(getString(index)))
