@@ -15,9 +15,8 @@ fun PixelSnoozeTheme(
     val context = LocalContext.current
 
     MaterialTheme(
-        colorScheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(
-            context
-        ),
+        colorScheme = if (darkTheme) dynamicDarkColorScheme(context)
+        else dynamicLightColorScheme(context),
         content = content
     )
 }
