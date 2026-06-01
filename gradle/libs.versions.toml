@@ -4,7 +4,7 @@ kotlin = "2.3.21"
 
 app-version = "1.0.0"
 android-compileSdk = "37"
-android-minSdk = "29"
+android-minSdk = "31"
 android-targetSdk = "37"
 
 coreKtx = "1.18.0"

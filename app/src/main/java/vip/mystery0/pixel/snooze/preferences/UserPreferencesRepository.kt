@@ -1,6 +1,7 @@
 package vip.mystery0.pixel.snooze.preferences
 
 import android.content.Context
+import androidx.core.content.edit
 
 class UserPreferencesRepository(context: Context) {
     private val preferences = context.getSharedPreferences("pixel_snooze_preferences", Context.MODE_PRIVATE)
@@ -10,7 +11,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     fun updateKeyword(keyword: String) {
-        preferences.edit().putString(KEY_ALARM_KEYWORD, keyword.trim()).apply()
+        preferences.edit { putString(KEY_ALARM_KEYWORD, keyword.trim()) }
     }
 
     companion object {
