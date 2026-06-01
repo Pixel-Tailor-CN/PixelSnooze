@@ -32,9 +32,7 @@ kotlin {
 android {
     namespace = packageName
     compileSdk {
-        version = release(libs.versions.android.compileSdk.get().toInt()) {
-            minorApiLevel = libs.versions.android.compileSdkMinor.get().toInt()
-        }
+        version = release(libs.versions.android.compileSdk.get().toInt())
     }
 
     defaultConfig {
@@ -90,7 +88,6 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.koin.android)
 
