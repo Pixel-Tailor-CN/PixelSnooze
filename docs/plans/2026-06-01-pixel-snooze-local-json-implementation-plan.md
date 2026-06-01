@@ -6,7 +6,9 @@
 
 **Architecture:** 核心逻辑先做成可单元测试的 Kotlin 类，再由 Android `NotificationListenerService` 编排调用。节假日数据通过 `HolidayDataSource` 抽象读取，首版使用 `AssetHolidayDataSource`，后续可替换为 GitHub 下载后的文件缓存，不引入数据库。
 
-**Tech Stack:** Kotlin、Jetpack Compose、Material 3、Koin 4.1.x、Android `NotificationListenerService`、JUnit 4。
+**Tech Stack:** Kotlin、Jetpack Compose、Material 3、Koin 4.1.x、Android `NotificationListenerService`。
+
+**执行调整:** 项目不保留单元测试和仪器测试；本文中早期的测试步骤作为原计划记录保留，当前执行以 `.\gradlew.bat :app:assembleDebug` 编译验证为准。
 
 ---
 
@@ -858,30 +860,24 @@ git commit -m "feat: add local-first home screen"
 
 ---
 
-### Task 7: 全量验证和收尾
+### Task 7: 全量编译验证和收尾
 
 **Files:**
 - Verify: all modified files
 
-- [ ] **Step 1: 运行单元测试**
-
-Run: `.\gradlew.bat :app:testDebugUnitTest`
-
-Expected: BUILD SUCCESSFUL。
-
-- [ ] **Step 2: 运行 Debug 编译**
+- [ ] **Step 1: 运行 Debug 编译**
 
 Run: `.\gradlew.bat :app:assembleDebug`
 
 Expected: BUILD SUCCESSFUL。
 
-- [ ] **Step 3: 检查 Git 状态**
+- [ ] **Step 2: 检查 Git 状态**
 
 Run: `git status --short`
 
 Expected: 只剩用户已有的 `init.md` 状态，或工作区干净；不应出现未解释的源码变更。
 
-- [ ] **Step 4: 最终提交**
+- [ ] **Step 3: 最终提交**
 
 如果前面每个 Task 已提交，本步骤不需要新提交。若有修正，使用：
 
@@ -895,5 +891,6 @@ git commit -m "test: verify local json alarm flow"
 ## 自审结果
 
 - Spec 覆盖：NLS、包名快速熔断、关键词匹配、内置 JSON、O(1) 内存判定、无数据库、无首版联网、基础 UI、英文日志均有对应任务。
+- 执行调整：按用户要求不保留单元测试，最终验证只使用 Android 编译。
 - 占位符扫描：计划中没有 `TBD`、`TODO` 或未定义的后续实现要求。
 - 类型一致性：`HolidayDataSource`、`HolidayRepository`、`AlarmNotificationParser`、`AlarmDismissActionFinder`、`UserPreferencesRepository` 的命名和调用关系在各任务中一致。
