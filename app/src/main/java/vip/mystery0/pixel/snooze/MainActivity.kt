@@ -4,44 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import org.koin.android.ext.android.inject
+import vip.mystery0.pixel.snooze.holiday.HolidayRepository
+import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
+import vip.mystery0.pixel.snooze.ui.home.HomeScreen
 import vip.mystery0.pixel.snooze.ui.theme.PixelSnoozeTheme
 
 class MainActivity : ComponentActivity() {
+    private val holidayRepository: HolidayRepository by inject()
+    private val preferencesRepository: UserPreferencesRepository by inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             PixelSnoozeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                HomeScreen(
+                    holidayRepository = holidayRepository,
+                    preferencesRepository = preferencesRepository
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    PixelSnoozeTheme {
-        Greeting("Android")
     }
 }
