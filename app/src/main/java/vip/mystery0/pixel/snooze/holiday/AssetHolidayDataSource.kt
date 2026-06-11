@@ -17,6 +17,14 @@ class AssetHolidayDataSource(
     companion object {
         fun parse(inputStream: InputStream): HolidayCalendar {
             val json = JSONObject(inputStream.bufferedReader().use { it.readText() })
+            return parse(json)
+        }
+
+        fun parse(text: String): HolidayCalendar {
+            return parse(JSONObject(text))
+        }
+
+        private fun parse(json: JSONObject): HolidayCalendar {
             return HolidayCalendar(
                 year = json.getInt("year"),
                 holidays = json.getJSONArray("holidays").toDateSet(),

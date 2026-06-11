@@ -3,6 +3,8 @@ package vip.mystery0.pixel.snooze.ui.home
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.widget.Toast
@@ -76,13 +78,16 @@ fun HomeScreen(
     var showKeywordDialog by remember { mutableStateOf(false) }
     var showDismissWordsDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
-    val calendar = remember { holidayRepository.currentCalendar() }
+    var isRefreshingCalendar by remember { mutableStateOf(false) }
+    var calendar by remember { mutableStateOf(holidayRepository.currentCalendar()) }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
-    DisposableEffect(lifecycleOwner, context, historyRepository) {
+    DisposableEffect(lifecycleOwner, context, historyRepository, holidayRepository) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 listenerEnabled = isNotificationListenerEnabled(context)
                 historySnapshot = historyRepository.snapshot()
+                calendar = holidayRepository.currentCalendar()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -202,6 +207,22 @@ fun HomeScreen(
         HolidayCalendarDialog(
             year = calendar.year,
             holidays = calendar.holidays.sorted(),
+            isRefreshing = isRefreshingCalendar,
+            onRefresh = {
+                if (isRefreshingCalendar) return@HolidayCalendarDialog
+                isRefreshingCalendar = true
+                holidayRepository.refreshFromRemote { success ->
+                    mainHandler.post {
+                        isRefreshingCalendar = false
+                        calendar = holidayRepository.currentCalendar()
+                        Toast.makeText(
+                            context,
+                            if (success) "调休日历已更新" else "调休日历更新失败",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
             onDismiss = { showCalendarDialog = false }
         )
     }
@@ -384,6 +405,8 @@ private fun DismissWordsEditDialog(
 private fun HolidayCalendarDialog(
     year: Int,
     holidays: List<LocalDate>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -410,6 +433,14 @@ private fun HolidayCalendarDialog(
             }
         },
         confirmButton = {
+            TextButton(
+                onClick = onRefresh,
+                enabled = !isRefreshing
+            ) {
+                Text(if (isRefreshing) "更新中" else "更新")
+            }
+        },
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("关闭")
             }
