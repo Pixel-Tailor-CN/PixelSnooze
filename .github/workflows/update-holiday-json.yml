@@ -31,27 +31,20 @@ jobs:
           OUTPUT_PATH = Path("json/holiday.json")
 
           current_year = datetime.date.today().year
-          years = range(current_year - 2, current_year + 1)
           holidays = set()
 
-          for year in years:
-              url = SOURCE_URL.format(year=year)
-              try:
-                  with urllib.request.urlopen(url, timeout=30) as response:
-                      payload = json.load(response)
-              except urllib.error.HTTPError as error:
-                  if error.code == 404:
-                      print(f"Skip missing holiday data: {year}")
-                      continue
-                  raise
+          url = SOURCE_URL.format(year=current_year)
+          with urllib.request.urlopen(url, timeout=30) as response:
+              payload = json.load(response)
 
-              for day in payload.get("days", []):
-                  if not day.get("isOffDay"):
-                      continue
-                  date = day.get("date")
-                  if not date:
-                      continue
-                  datetime.date.fromisoformat(date)
+          for day in payload.get("days", []):
+              if not day.get("isOffDay"):
+                  continue
+              date = day.get("date")
+              if not date:
+                  continue
+              parsed_date = datetime.date.fromisoformat(date)
+              if parsed_date.year == current_year:
                   holidays.add(date)
 
           if not holidays:
