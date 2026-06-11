@@ -8,7 +8,7 @@ import java.time.LocalDate
 
 class AssetHolidayDataSource(
     private val context: Context,
-    private val assetName: String = "holiday_2026.json"
+    private val assetName: String = "holiday.json"
 ) : HolidayDataSource {
     override fun loadCalendar(): HolidayCalendar {
         return context.assets.open(assetName).use(::parse)

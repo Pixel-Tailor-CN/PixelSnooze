@@ -1,0 +1,83 @@
+name: Update holiday data
+
+on:
+  schedule:
+    # GitHub Actions 使用 UTC 时间；这里对应 Asia/Shanghai 每天 03:00。
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-holiday-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Generate holiday.json
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime
+          import json
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          SOURCE_URL = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json"
+          OUTPUT_PATH = Path("json/holiday.json")
+
+          current_year = datetime.date.today().year
+          years = range(current_year - 2, current_year + 1)
+          holidays = set()
+
+          for year in years:
+              url = SOURCE_URL.format(year=year)
+              try:
+                  with urllib.request.urlopen(url, timeout=30) as response:
+                      payload = json.load(response)
+              except urllib.error.HTTPError as error:
+                  if error.code == 404:
+                      print(f"Skip missing holiday data: {year}")
+                      continue
+                  raise
+
+              for day in payload.get("days", []):
+                  if not day.get("isOffDay"):
+                      continue
+                  date = day.get("date")
+                  if not date:
+                      continue
+                  datetime.date.fromisoformat(date)
+                  holidays.add(date)
+
+          if not holidays:
+              raise SystemExit("No holiday data generated")
+
+          output = {
+              "year": current_year,
+              "holidays": sorted(holidays),
+          }
+
+          content = json.dumps(output, ensure_ascii=False, indent=2) + "\n"
+          OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+          OUTPUT_PATH.write_text(content, encoding="utf-8")
+          print(f"Updated {OUTPUT_PATH}")
+          PY
+
+      - name: Commit holiday data changes
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- json/holiday.json)" ]; then
+            echo "Holiday data is up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add json/holiday.json
+          git commit -m "chore: update holiday data"
+          git push
