@@ -1,13 +1,13 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 
 app-version = "1.0.0"
 android-compileSdk = "37"
 android-minSdk = "31"
 android-targetSdk = "37"
 
-coreKtx = "1.18.0"
+coreKtx = "1.19.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 composeBom = "2026.05.01"
