@@ -89,6 +89,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.material.icons.extended)
+    implementation(libs.zhanghai.preference)
     implementation(libs.koin.android)
 
     debugImplementation(libs.androidx.compose.ui.tooling)

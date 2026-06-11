@@ -1,5 +1,6 @@
 package vip.mystery0.pixel.snooze
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,7 +22,10 @@ class MainActivity : ComponentActivity() {
             PixelSnoozeTheme {
                 HomeScreen(
                     holidayRepository = holidayRepository,
-                    preferencesRepository = preferencesRepository
+                    preferencesRepository = preferencesRepository,
+                    onOpenSettings = {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    }
                 )
             }
         }

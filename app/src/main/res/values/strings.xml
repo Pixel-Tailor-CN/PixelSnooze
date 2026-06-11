@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Pixel Snooze</string>
+    <string name="settings_title">设置</string>
 </resources>
