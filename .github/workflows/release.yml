@@ -28,6 +28,9 @@ jobs:
         run: |
           echo "${{ secrets.SIGN_KEY_STORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
 
+      - name: Update Holiday
+        run: cp json/holiday.json app/src/main/assets/holiday.json
+
       - name: Build Release Bundle
         env:
           SIGN_KEY_STORE_FILE: ${{ runner.temp }}/release.jks
