@@ -11,7 +11,7 @@ Pixel Snooze 首版用于验证基于 `NotificationListenerService` 静默关闭
 - 监听 `com.google.android.deskclock` 和 `com.android.deskclock` 的通知。
 - 在包名命中后读取通知标题和正文，匹配用户关键词。
 - 从内置 JSON 加载 2026 年节假日数据到内存集合。
-- 使用 O(1) 内存查询判断明天是否为休息日。
+- 使用 O(1) 内存查询判断今天是否为休息日。
 - 如果命中休息日，查找通知操作中的关闭动作并执行 `PendingIntent.send()`。
 - 提供基础 Compose UI，用于查看通知监听权限状态、默认关键词和内置日历状态，并跳转系统通知监听权限页。
 
@@ -31,7 +31,7 @@ Pixel Snooze 首版用于验证基于 `NotificationListenerService` 静默关闭
 - `PixelSnoozeNotificationListenerService`：Android NLS 入口，只负责快速熔断和编排。
 - `AlarmNotificationParser`：解析通知文本并判断是否命中关键词。
 - `AlarmDismissActionFinder`：从通知 actions 中寻找关闭动作。
-- `HolidayRepository`：对外提供 `isHolidayTomorrow()`。
+- `HolidayRepository`：对外提供 `isHoliday()`。
 - `HolidayDataSource`：节假日数据源接口。
 - `AssetHolidayDataSource`：首版从 `assets/holiday_2026.json` 读取内置数据。
 - `UserPreferencesRepository`：首版保存和读取关键词，使用 `SharedPreferences`。
@@ -46,14 +46,15 @@ Pixel Snooze 首版用于验证基于 `NotificationListenerService` 静默关闭
 ```json
 {
   "year": 2026,
-  "holidays": ["2026-01-01"],
-  "workdays": ["2026-02-14"]
+  "holidays": [
+    "2026-01-01"
+  ]
 }
 ```
 
-- `holidays` 表示休息日，包括法定节假日和周末调休休息日。
-- `workdays` 表示调休补班日，用于从默认周末休息规则中排除。
-- 判断逻辑为：如果日期在 `holidays` 中则为休息日；如果在 `workdays` 中则为工作日；否则周六、周日为休息日，周一到周五为工作日。
+- `holidays` 表示休息日。
+- 判断逻辑为：如果今天在 `holidays` 中则为休息日，否则视为非休息日。
+- 当前版本不需要 `workdays`、调休补班日或工作日数据。
 
 ## 通知处理流程
 
@@ -62,16 +63,16 @@ Pixel Snooze 首版用于验证基于 `NotificationListenerService` 静默关闭
 1. 非目标包名直接返回。
 2. 包名命中后再读取 `sbn.notification` 和 `extras`。
 3. 解析 `Notification.EXTRA_TITLE` 与 `Notification.EXTRA_TEXT`。
-4. 文本命中关键词后调用 `HolidayRepository.isHolidayTomorrow()`。
-5. 明天不是休息日则返回。
-6. 明天是休息日则查找关闭动作。
+4. 文本命中关键词后调用 `HolidayRepository.isHoliday()`。
+5. 今天不是休息日则返回。
+6. 今天是休息日则查找关闭动作。
 7. 找到后执行 `PendingIntent.send()`。
 8. 所有外部调用异常只记录英文 Logcat 日志，服务不崩溃。
 
 ## 性能约束
 
 - 包名过滤前不读取 `notification.extras`。
-- `isHolidayTomorrow()` 只访问内存集合和当前日期。
+- `isHoliday()` 只访问内存集合和当前日期。
 - NLS 回调中不执行网络请求。
 - 首次加载 JSON 发生在仓库初始化路径中，NLS 查询路径不解析 JSON。
 
@@ -87,21 +88,16 @@ Pixel Snooze 首版用于验证基于 `NotificationListenerService` 静默关闭
 
 UI 使用 Jetpack Compose 与 Material 3，继续使用动态取色。
 
-## 测试
+## 验证
 
-首版至少覆盖以下单元测试：
-
-- 目标包名白名单判断。
-- 通知文本关键词匹配。
-- 关闭动作标题匹配。
-- `HolidayRepository` 对 `holidays`、`workdays` 和默认周末规则的判断。
+当前项目不要求单元测试。首版验证以 Android 构建、lint 和必要的人工检查为准。
 
 ## 日志
 
 日志内容使用英文，避免本地化文本影响排查：
 
 - 包名命中但通知解析失败。
-- 关键词命中但明天不是休息日。
+- 关键词命中但今天不是休息日。
 - 成功发送 dismiss action。
 - `PendingIntent.send()` 抛出 `CanceledException` 或其他异常。
 
