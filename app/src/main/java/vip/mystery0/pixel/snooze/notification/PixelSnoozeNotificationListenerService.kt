@@ -52,7 +52,8 @@ class PixelSnoozeNotificationListenerService : NotificationListenerService() {
             return
         }
 
-        val action = actionFinder.findDismissAction(notification)
+        val dismissWords = preferencesRepository.dismissWords()
+        val action = actionFinder.findDismissAction(notification, dismissWords)
         if (action == null) {
             historyRepository.recordIgnore(packageName, title, text, "未找到跳过动作")
             Log.w(TAG, "Dismiss action not found")

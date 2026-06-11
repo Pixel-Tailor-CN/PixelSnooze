@@ -5,25 +5,31 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.text.TextUtils
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -34,10 +40,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import vip.mystery0.pixel.snooze.R
 import vip.mystery0.pixel.snooze.history.AlarmHistoryRepository
 import vip.mystery0.pixel.snooze.history.AlarmHistorySnapshot
 import vip.mystery0.pixel.snooze.history.AlarmNotificationExecutionEvent
@@ -46,6 +55,7 @@ import vip.mystery0.pixel.snooze.holiday.HolidayRepository
 import vip.mystery0.pixel.snooze.notification.PixelSnoozeNotificationListenerService
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -61,6 +71,11 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var listenerEnabled by remember { mutableStateOf(isNotificationListenerEnabled(context)) }
     var historySnapshot by remember { mutableStateOf(historyRepository.snapshot()) }
+    var keyword by remember { mutableStateOf(preferencesRepository.keyword()) }
+    var dismissWordsText by remember { mutableStateOf(preferencesRepository.dismissWordsText()) }
+    var showKeywordDialog by remember { mutableStateOf(false) }
+    var showDismissWordsDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
     val calendar = remember { holidayRepository.currentCalendar() }
 
     DisposableEffect(lifecycleOwner, context, historyRepository) {
@@ -86,6 +101,16 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            context.openUrl("https://github.com/Pixel-Tailor-CN/PixelSnooze")
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_github),
+                            contentDescription = "GitHub"
+                        )
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
@@ -112,21 +137,73 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyLarge
             )
 
-            StatusRow("通知监听", if (listenerEnabled) "已启用" else "未启用")
-            StatusRow("关键词", preferencesRepository.keyword())
-            StatusRow("内置日历", "${calendar.year} 年，${calendar.holidayCount()} 个休息日")
+            StatusRow(
+                label = "通知监听",
+                value = if (listenerEnabled) "已启用" else "未启用",
+                onClick = { context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+            )
+            StatusRow(
+                label = "关键词",
+                value = keyword,
+                onClick = { showKeywordDialog = true }
+            )
+            StatusRow(
+                label = "跳过按钮文本",
+                value = dismissWordsText.toSingleLineSummary(),
+                onClick = { showDismissWordsDialog = true }
+            )
+            StatusRow(
+                label = "调休日历",
+                value = "${calendar.year} 年，${calendar.holidayCount()} 个休息日",
+                onClick = { showCalendarDialog = true }
+            )
 
             OutlinedButton(
                 onClick = {
                     context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !listenerEnabled
             ) {
-                Text("打开通知监听设置")
+                Text(if (listenerEnabled) "通知监听已开启" else "打开通知监听设置")
             }
 
             AlarmHistoryContent(historySnapshot)
         }
+    }
+
+    if (showKeywordDialog) {
+        KeywordEditDialog(
+            initialKeyword = keyword,
+            onDismiss = { showKeywordDialog = false },
+            onSave = { input ->
+                preferencesRepository.updateKeyword(input)
+                keyword = preferencesRepository.keyword()
+                showKeywordDialog = false
+                Toast.makeText(context, "关键词已保存", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (showDismissWordsDialog) {
+        DismissWordsEditDialog(
+            initialText = dismissWordsText,
+            onDismiss = { showDismissWordsDialog = false },
+            onSave = { input ->
+                preferencesRepository.updateDismissWords(input)
+                dismissWordsText = preferencesRepository.dismissWordsText()
+                showDismissWordsDialog = false
+                Toast.makeText(context, "跳过按钮文本已保存", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (showCalendarDialog) {
+        HolidayCalendarDialog(
+            year = calendar.year,
+            holidays = calendar.holidays.sorted(),
+            onDismiss = { showCalendarDialog = false }
+        )
     }
 }
 
@@ -201,9 +278,17 @@ private fun HistoryItem(title: String, summary: String) {
 }
 
 @Composable
-private fun StatusRow(label: String, value: String) {
+private fun StatusRow(label: String, value: String, onClick: (() -> Unit)? = null) {
+    val modifier = if (onClick == null) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    }
+
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         tonalElevation = 1.dp,
         shape = MaterialTheme.shapes.medium
     ) {
@@ -215,6 +300,121 @@ private fun StatusRow(label: String, value: String) {
             Text(text = value, style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+@Composable
+private fun KeywordEditDialog(
+    initialKeyword: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var input by remember(initialKeyword) { mutableStateOf(initialKeyword) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("关键词") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "当闹钟通知标题或正文命中这里的内容时，应用会继续尝试执行通知里的跳过操作。",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("关键词") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(input) }) {
+                Text("保存")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DismissWordsEditDialog(
+    initialText: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var input by remember(initialText) { mutableStateOf(initialText) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("跳过按钮文本") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "应用会在闹钟通知的按钮标题中查找这些文本，匹配到任意一项后执行对应操作。",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("每行一个文本") },
+                    minLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(input) }) {
+                Text("保存")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+@Composable
+private fun HolidayCalendarDialog(
+    year: Int,
+    holidays: List<LocalDate>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("调休日历") },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "$year 年，共 ${holidays.size} 个休息日",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                holidays.forEach { date ->
+                    Text(
+                        text = date.format(calendarDateFormatter),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        }
+    )
 }
 
 private fun isNotificationListenerEnabled(context: Context): Boolean {
@@ -247,3 +447,18 @@ private fun Long.formatHistoryTime(): String {
 }
 
 private val historyTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss")
+
+private val calendarDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+private fun String.toSingleLineSummary(): String {
+    return lineSequence()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString("、")
+}
+
+private fun Context.openUrl(url: String) {
+    runCatching {
+        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    }
+}
