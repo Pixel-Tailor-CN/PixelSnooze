@@ -2,7 +2,6 @@ package vip.mystery0.pixel.snooze.holiday
 
 import android.content.Context
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.InputStream
 import java.time.LocalDate
 
@@ -16,18 +15,27 @@ class AssetHolidayDataSource(
 
     companion object {
         fun parse(inputStream: InputStream): HolidayCalendar {
-            val json = JSONObject(inputStream.bufferedReader().use { it.readText() })
+            val json = JSONArray(inputStream.bufferedReader().use { it.readText() })
             return parse(json)
         }
 
         fun parse(text: String): HolidayCalendar {
-            return parse(JSONObject(text))
+            return parse(JSONArray(text))
         }
 
-        private fun parse(json: JSONObject): HolidayCalendar {
+        private fun parse(json: JSONArray): HolidayCalendar {
             return HolidayCalendar(
-                year = json.getInt("year"),
-                holidays = json.getJSONArray("holidays").toDateSet(),
+                years = buildList {
+                    for (index in 0 until json.length()) {
+                        val yearJson = json.getJSONObject(index)
+                        add(
+                            HolidayYear(
+                                year = yearJson.getInt("year"),
+                                holidays = yearJson.getJSONArray("holidays").toDateSet(),
+                            )
+                        )
+                    }
+                }.sortedBy { it.year },
             )
         }
     }

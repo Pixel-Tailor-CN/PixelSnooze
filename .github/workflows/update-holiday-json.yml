@@ -31,29 +31,40 @@ jobs:
           OUTPUT_PATH = Path("json/holiday.json")
 
           current_year = datetime.date.today().year
-          holidays = set()
+          years = range(current_year - 1, current_year + 2)
+          output = []
 
-          url = SOURCE_URL.format(year=current_year)
-          with urllib.request.urlopen(url, timeout=30) as response:
-              payload = json.load(response)
+          for year in years:
+              holidays = set()
+              url = SOURCE_URL.format(year=year)
+              try:
+                  with urllib.request.urlopen(url, timeout=30) as response:
+                      payload = json.load(response)
+              except urllib.error.HTTPError as error:
+                  if error.code == 404:
+                      print(f"Skip missing holiday data: {year}")
+                      continue
+                  raise
 
-          for day in payload.get("days", []):
-              if not day.get("isOffDay"):
-                  continue
-              date = day.get("date")
-              if not date:
-                  continue
-              parsed_date = datetime.date.fromisoformat(date)
-              if parsed_date.year == current_year:
-                  holidays.add(date)
+              for day in payload.get("days", []):
+                  if not day.get("isOffDay"):
+                      continue
+                  date = day.get("date")
+                  if not date:
+                      continue
+                  parsed_date = datetime.date.fromisoformat(date)
+                  if parsed_date.year == year:
+                      holidays.add(date)
 
-          if not holidays:
+              if not holidays:
+                  print(f"No holiday data for year: {year}")
+              output.append({
+                  "year": year,
+                  "holidays": sorted(holidays),
+              })
+
+          if not output:
               raise SystemExit("No holiday data generated")
-
-          output = {
-              "year": current_year,
-              "holidays": sorted(holidays),
-          }
 
           content = json.dumps(output, ensure_ascii=False, indent=2) + "\n"
           OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

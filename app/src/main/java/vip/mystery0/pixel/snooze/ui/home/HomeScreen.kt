@@ -53,11 +53,11 @@ import vip.mystery0.pixel.snooze.history.AlarmHistoryRepository
 import vip.mystery0.pixel.snooze.history.AlarmHistorySnapshot
 import vip.mystery0.pixel.snooze.history.AlarmNotificationExecutionEvent
 import vip.mystery0.pixel.snooze.history.AlarmSkipEvent
+import vip.mystery0.pixel.snooze.holiday.HolidayCalendar
 import vip.mystery0.pixel.snooze.holiday.HolidayRepository
 import vip.mystery0.pixel.snooze.notification.PixelSnoozeNotificationListenerService
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -159,7 +159,7 @@ fun HomeScreen(
             )
             StatusRow(
                 label = "调休日历",
-                value = "${calendar.year} 年，${calendar.holidayCount()} 个休息日",
+                value = "${calendar.yearRangeText()}，${calendar.holidayCount()} 个休息日",
                 onClick = { showCalendarDialog = true }
             )
 
@@ -205,8 +205,7 @@ fun HomeScreen(
 
     if (showCalendarDialog) {
         HolidayCalendarDialog(
-            year = calendar.year,
-            holidays = calendar.holidays.sorted(),
+            calendar = calendar,
             isRefreshing = isRefreshingCalendar,
             onRefresh = {
                 if (isRefreshingCalendar) return@HolidayCalendarDialog
@@ -403,8 +402,7 @@ private fun DismissWordsEditDialog(
 
 @Composable
 private fun HolidayCalendarDialog(
-    year: Int,
-    holidays: List<LocalDate>,
+    calendar: HolidayCalendar,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onDismiss: () -> Unit
@@ -421,14 +419,20 @@ private fun HolidayCalendarDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "$year 年，共 ${holidays.size} 个休息日",
+                    text = "${calendar.yearRangeText()}，共 ${calendar.holidayCount()} 个休息日",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                holidays.forEach { date ->
+                calendar.years.forEach { yearData ->
                     Text(
-                        text = date.format(calendarDateFormatter),
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "${yearData.year} 年（${yearData.holidayCount()} 个）",
+                        style = MaterialTheme.typography.titleSmall
                     )
+                    yearData.holidays.sorted().forEach { date ->
+                        Text(
+                            text = date.format(calendarDateFormatter),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
         },
@@ -480,6 +484,18 @@ private fun Long.formatHistoryTime(): String {
 private val historyTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss")
 
 private val calendarDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+private fun HolidayCalendar.yearRangeText(): String {
+    val yearValues = years.map { it.year }
+    if (yearValues.isEmpty()) return "暂无年份"
+    val firstYear = yearValues.first()
+    val lastYear = yearValues.last()
+    return if (firstYear == lastYear) {
+        "$firstYear 年"
+    } else {
+        "$firstYear-$lastYear 年"
+    }
+}
 
 private fun String.toSingleLineSummary(): String {
     return lineSequence()
