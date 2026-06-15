@@ -1,6 +1,5 @@
 package vip.mystery0.pixel.snooze.schedule
 
-import java.lang.Math.floorMod
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -172,3 +171,5 @@ fun AlternatingWeekType.displayText(): String {
         AlternatingWeekType.SMALL -> "小周"
     }
 }
+
+private fun floorMod(x: Long, y: Long): Long = ((x % y) + y) % y
