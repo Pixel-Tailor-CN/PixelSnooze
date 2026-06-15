@@ -9,10 +9,14 @@ import vip.mystery0.pixel.snooze.holiday.LocalFirstHolidayDataSource
 import vip.mystery0.pixel.snooze.notification.AlarmDismissActionFinder
 import vip.mystery0.pixel.snooze.notification.AlarmNotificationParser
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
+import vip.mystery0.pixel.snooze.schedule.RestDayRepository
+import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
 
 val appModule = module {
     single<HolidayDataSource> { LocalFirstHolidayDataSource(androidContext()) }
     single { HolidayRepository(get()) }
+    single { RestSchedulePreferencesRepository(androidContext()) }
+    single { RestDayRepository(get(), get()) }
     single { AlarmNotificationParser() }
     single { AlarmDismissActionFinder() }
     single { UserPreferencesRepository(androidContext()) }

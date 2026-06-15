@@ -7,13 +7,13 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import org.koin.android.ext.android.inject
 import vip.mystery0.pixel.snooze.history.AlarmHistoryRepository
-import vip.mystery0.pixel.snooze.holiday.HolidayRepository
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
+import vip.mystery0.pixel.snooze.schedule.RestDayRepository
 
 class PixelSnoozeNotificationListenerService : NotificationListenerService() {
     private val parser: AlarmNotificationParser by inject()
     private val actionFinder: AlarmDismissActionFinder by inject()
-    private val holidayRepository: HolidayRepository by inject()
+    private val restDayRepository: RestDayRepository by inject()
     private val preferencesRepository: UserPreferencesRepository by inject()
     private val historyRepository: AlarmHistoryRepository by inject()
 
@@ -46,9 +46,9 @@ class PixelSnoozeNotificationListenerService : NotificationListenerService() {
             return
         }
 
-        if (!holidayRepository.isHoliday()) {
-            historyRepository.recordIgnore(packageName, title, text, "今天不是休息日")
-            Log.i(TAG, "Alarm keyword matched but today is not holiday")
+        if (!restDayRepository.isRestDay()) {
+            historyRepository.recordIgnore(packageName, title, text, "今天未命中休息日规则")
+            Log.i(TAG, "Alarm keyword matched but today is not a rest day")
             return
         }
 
