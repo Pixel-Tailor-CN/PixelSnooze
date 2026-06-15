@@ -247,6 +247,7 @@ fun HomeScreen(
                 Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
             },
             onOpenCustomCalendar = {
+                customMonth = YearMonth.now()
                 showRestScheduleDialog = false
                 showCustomScheduleDialog = true
             },
