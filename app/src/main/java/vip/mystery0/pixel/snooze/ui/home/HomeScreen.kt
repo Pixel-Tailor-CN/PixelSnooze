@@ -57,6 +57,9 @@ import vip.mystery0.pixel.snooze.holiday.HolidayCalendar
 import vip.mystery0.pixel.snooze.holiday.HolidayRepository
 import vip.mystery0.pixel.snooze.notification.PixelSnoozeNotificationListenerService
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
+import vip.mystery0.pixel.snooze.schedule.RestDayRepository
+import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
+import vip.mystery0.pixel.snooze.schedule.summaryText
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -66,6 +69,8 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     holidayRepository: HolidayRepository,
     preferencesRepository: UserPreferencesRepository,
+    schedulePreferencesRepository: RestSchedulePreferencesRepository,
+    restDayRepository: RestDayRepository,
     historyRepository: AlarmHistoryRepository,
     onOpenSettings: () -> Unit
 ) {
@@ -75,18 +80,22 @@ fun HomeScreen(
     var historySnapshot by remember { mutableStateOf(historyRepository.snapshot()) }
     var keyword by remember { mutableStateOf(preferencesRepository.keyword()) }
     var dismissWordsText by remember { mutableStateOf(preferencesRepository.dismissWordsText()) }
+    var restRule by remember { mutableStateOf(restDayRepository.currentRule()) }
     var showKeywordDialog by remember { mutableStateOf(false) }
     var showDismissWordsDialog by remember { mutableStateOf(false) }
+    var showRestScheduleDialog by remember { mutableStateOf(false) }
+    var showCustomScheduleDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
     var isRefreshingCalendar by remember { mutableStateOf(false) }
     var calendar by remember { mutableStateOf(holidayRepository.currentCalendar()) }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
-    DisposableEffect(lifecycleOwner, context, historyRepository, holidayRepository) {
+    DisposableEffect(lifecycleOwner, context, historyRepository, holidayRepository, restDayRepository) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 listenerEnabled = isNotificationListenerEnabled(context)
                 historySnapshot = historyRepository.snapshot()
+                restRule = restDayRepository.currentRule()
                 calendar = holidayRepository.currentCalendar()
             }
         }
@@ -158,6 +167,11 @@ fun HomeScreen(
                 onClick = { showDismissWordsDialog = true }
             )
             StatusRow(
+                label = "休息日规则",
+                value = restRule.summaryText(),
+                onClick = { showRestScheduleDialog = true }
+            )
+            StatusRow(
                 label = "调休日历",
                 value = "${calendar.yearRangeText()}，${calendar.holidayCount()} 个休息日",
                 onClick = { showCalendarDialog = true }
@@ -200,6 +214,43 @@ fun HomeScreen(
                 showDismissWordsDialog = false
                 Toast.makeText(context, "跳过按钮文本已保存", Toast.LENGTH_SHORT).show()
             }
+        )
+    }
+
+    if (showRestScheduleDialog) {
+        RestScheduleDialog(
+            currentRule = restRule,
+            onSaveWeekend = {
+                schedulePreferencesRepository.updateHolidayAndWeekend()
+                restRule = restDayRepository.currentRule()
+                showRestScheduleDialog = false
+                Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
+            },
+            onSaveSingleDayOff = { day ->
+                schedulePreferencesRepository.updateSingleDayOff(day)
+                restRule = restDayRepository.currentRule()
+                showRestScheduleDialog = false
+                Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
+            },
+            onSaveAlternatingWeek = { largeDays, smallDays, weekType ->
+                schedulePreferencesRepository.updateAlternatingWeek(largeDays, smallDays, weekType)
+                restRule = restDayRepository.currentRule()
+                showRestScheduleDialog = false
+                Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
+            },
+            onSaveCycle = { workDays, restDays, todayIndex ->
+                schedulePreferencesRepository.updateCycle(workDays, restDays, todayIndex)
+                restRule = restDayRepository.currentRule()
+                showRestScheduleDialog = false
+                Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
+            },
+            onOpenCustomCalendar = {
+                schedulePreferencesRepository.updateCustomMode()
+                restRule = restDayRepository.currentRule()
+                showRestScheduleDialog = false
+                showCustomScheduleDialog = true
+            },
+            onDismiss = { showRestScheduleDialog = false }
         )
     }
 

@@ -9,12 +9,16 @@ import org.koin.android.ext.android.inject
 import vip.mystery0.pixel.snooze.history.AlarmHistoryRepository
 import vip.mystery0.pixel.snooze.holiday.HolidayRepository
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
+import vip.mystery0.pixel.snooze.schedule.RestDayRepository
+import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
 import vip.mystery0.pixel.snooze.ui.home.HomeScreen
 import vip.mystery0.pixel.snooze.ui.theme.PixelSnoozeTheme
 
 class MainActivity : ComponentActivity() {
     private val holidayRepository: HolidayRepository by inject()
     private val preferencesRepository: UserPreferencesRepository by inject()
+    private val schedulePreferencesRepository: RestSchedulePreferencesRepository by inject()
+    private val restDayRepository: RestDayRepository by inject()
     private val historyRepository: AlarmHistoryRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,6 +29,8 @@ class MainActivity : ComponentActivity() {
                 HomeScreen(
                     holidayRepository = holidayRepository,
                     preferencesRepository = preferencesRepository,
+                    schedulePreferencesRepository = schedulePreferencesRepository,
+                    restDayRepository = restDayRepository,
                     historyRepository = historyRepository,
                     onOpenSettings = {
                         startActivity(Intent(this, SettingsActivity::class.java))
