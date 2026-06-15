@@ -75,17 +75,19 @@ sealed interface RestScheduleRule {
     }
 
     data class HolidayAndCycle(
-        val workDays: Int,
-        val restDays: Int,
+        val cycleDays: Int,
+        val restDayIndexes: Set<Int>,
         val anchorDate: LocalDate,
         val anchorDayIndex: Int
     ) : RestScheduleRule {
         override val mode: RestScheduleMode = RestScheduleMode.HOLIDAY_AND_CYCLE
 
         init {
-            require(workDays >= 1) { "Work days must be positive" }
-            require(restDays >= 1) { "Rest days must be positive" }
-            require(anchorDayIndex in 1..(workDays + restDays)) {
+            require(cycleDays >= 1) { "Cycle days must be positive" }
+            require(restDayIndexes.all { it in 1..cycleDays }) {
+                "Rest day indexes must be within the cycle"
+            }
+            require(anchorDayIndex in 1..cycleDays) {
                 "Anchor day index must be within the cycle"
             }
         }
@@ -124,10 +126,9 @@ fun RestScheduleRule.isScheduleRestDay(date: LocalDate): Boolean {
         }
 
         is RestScheduleRule.HolidayAndCycle -> {
-            val cycleLength = workDays + restDays
             val daysBetween = ChronoUnit.DAYS.between(anchorDate, date)
-            val currentIndex = floorMod(anchorDayIndex - 1L + daysBetween, cycleLength.toLong()) + 1
-            currentIndex > workDays.toLong()
+            val currentIndex = floorMod(anchorDayIndex - 1L + daysBetween, cycleDays.toLong()) + 1
+            currentIndex.toInt() in restDayIndexes
         }
 
         is RestScheduleRule.Custom -> {
@@ -144,7 +145,14 @@ fun RestScheduleRule.summaryText(): String {
         is RestScheduleRule.HolidayAndAlternatingWeek -> {
             "节假日 + 大小周（本周锚点：${anchorWeekType.displayText()}）"
         }
-        is RestScheduleRule.HolidayAndCycle -> "节假日 + 上 $workDays 休 $restDays"
+        is RestScheduleRule.HolidayAndCycle -> {
+            val restSummary = if (restDayIndexes.isEmpty()) {
+                "无休息日"
+            } else {
+                "第 ${restDayIndexes.sorted().joinToString("、")} 天休息"
+            }
+            "节假日 + $cycleDays 天周期（$restSummary）"
+        }
         is RestScheduleRule.Custom -> "完全自定义"
     }
 }

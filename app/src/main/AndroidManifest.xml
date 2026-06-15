@@ -30,6 +30,13 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".RestScheduleActivity"
+            android:exported="false"
+            android:label="@string/rest_schedule_title"
+            android:theme="@style/Theme.PixelSnooze"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

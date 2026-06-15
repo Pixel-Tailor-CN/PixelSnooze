@@ -52,11 +52,11 @@ class RestSchedulePreferencesRepository(
         )
     }
 
-    fun updateCycle(workDays: Int, restDays: Int, todayIndex: Int) {
+    fun updateCycle(cycleDays: Int, restDayIndexes: Set<Int>, todayIndex: Int) {
         updateRule(
             RestScheduleRule.HolidayAndCycle(
-                workDays = workDays,
-                restDays = restDays,
+                cycleDays = cycleDays,
+                restDayIndexes = restDayIndexes,
                 anchorDate = todayProvider(),
                 anchorDayIndex = todayIndex
             )
@@ -82,6 +82,36 @@ class RestSchedulePreferencesRepository(
         preferences.edit {
             putString(customMonthKey(schedule.month), schedule.toJson().toString())
         }
+    }
+
+    fun futureCustomRestDates(futureDates: List<LocalDate>): Set<LocalDate> {
+        val futureDateSet = futureDates.toSet()
+        return futureDates
+            .map { YearMonth.from(it) }
+            .distinct()
+            .flatMap { month -> customMonthlySchedule(month).restDates }
+            .filter { it in futureDateSet }
+            .toSet()
+    }
+
+    fun updateFutureCustomRestDates(
+        futureDates: List<LocalDate>,
+        restDates: Set<LocalDate>
+    ) {
+        futureDates
+            .groupBy { YearMonth.from(it) }
+            .forEach { (month, datesInMonth) ->
+                val dateSet = datesInMonth.toSet()
+                val selectedRestDates = restDates.intersect(dateSet)
+                val currentSchedule = customMonthlySchedule(month)
+                updateCustomMonthlySchedule(
+                    CustomMonthlySchedule(
+                        month = month,
+                        workDates = currentSchedule.workDates - dateSet,
+                        restDates = (currentSchedule.restDates - dateSet) + selectedRestDates
+                    )
+                )
+            }
     }
 
     private fun updateRule(rule: RestScheduleRule) {
@@ -113,12 +143,23 @@ class RestSchedulePreferencesRepository(
 
             RestScheduleMode.HOLIDAY_AND_CYCLE -> {
                 val ruleJson = json.getJSONObject("cycle")
-                RestScheduleRule.HolidayAndCycle(
-                    workDays = ruleJson.getInt("workDays"),
-                    restDays = ruleJson.getInt("restDays"),
-                    anchorDate = LocalDate.parse(ruleJson.getString("anchorDate")),
-                    anchorDayIndex = ruleJson.getInt("anchorDayIndex")
-                )
+                if (ruleJson.has("cycleDays")) {
+                    RestScheduleRule.HolidayAndCycle(
+                        cycleDays = ruleJson.getInt("cycleDays"),
+                        restDayIndexes = ruleJson.optJSONArray("restDayIndexes").toIntSet(),
+                        anchorDate = LocalDate.parse(ruleJson.getString("anchorDate")),
+                        anchorDayIndex = ruleJson.getInt("anchorDayIndex")
+                    )
+                } else {
+                    val workDays = ruleJson.getInt("workDays")
+                    val restDays = ruleJson.getInt("restDays")
+                    RestScheduleRule.HolidayAndCycle(
+                        cycleDays = workDays + restDays,
+                        restDayIndexes = ((workDays + 1)..(workDays + restDays)).toSet(),
+                        anchorDate = LocalDate.parse(ruleJson.getString("anchorDate")),
+                        anchorDayIndex = ruleJson.getInt("anchorDayIndex")
+                    )
+                }
             }
 
             RestScheduleMode.CUSTOM -> RestScheduleRule.Custom(emptyMap())
@@ -151,8 +192,8 @@ class RestSchedulePreferencesRepository(
                 json.put(
                     "cycle",
                     JSONObject()
-                        .put("workDays", workDays)
-                        .put("restDays", restDays)
+                        .put("cycleDays", cycleDays)
+                        .put("restDayIndexes", restDayIndexes.sorted().toIntJsonArray())
                         .put("anchorDate", anchorDate.toString())
                         .put("anchorDayIndex", anchorDayIndex)
                 )
@@ -194,6 +235,21 @@ class RestSchedulePreferencesRepository(
         val jsonArray = JSONArray()
         forEach { jsonArray.put(it) }
         return jsonArray
+    }
+
+    private fun List<Int>.toIntJsonArray(): JSONArray {
+        val jsonArray = JSONArray()
+        forEach { jsonArray.put(it) }
+        return jsonArray
+    }
+
+    private fun JSONArray?.toIntSet(): Set<Int> {
+        if (this == null) return emptySet()
+        return buildSet {
+            for (index in 0 until length()) {
+                add(getInt(index))
+            }
+        }
     }
 
     private fun JSONArray?.toLocalDateSet(): Set<LocalDate> {
