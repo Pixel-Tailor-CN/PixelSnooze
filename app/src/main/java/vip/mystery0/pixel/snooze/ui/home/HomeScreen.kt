@@ -61,6 +61,7 @@ import vip.mystery0.pixel.snooze.schedule.RestDayRepository
 import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
 import vip.mystery0.pixel.snooze.schedule.summaryText
 import java.time.Instant
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -88,6 +89,7 @@ fun HomeScreen(
     var showCalendarDialog by remember { mutableStateOf(false) }
     var isRefreshingCalendar by remember { mutableStateOf(false) }
     var calendar by remember { mutableStateOf(holidayRepository.currentCalendar()) }
+    var customMonth by remember { mutableStateOf(YearMonth.now()) }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
     DisposableEffect(lifecycleOwner, context, historyRepository, holidayRepository, restDayRepository) {
@@ -251,6 +253,20 @@ fun HomeScreen(
                 showCustomScheduleDialog = true
             },
             onDismiss = { showRestScheduleDialog = false }
+        )
+    }
+
+    if (showCustomScheduleDialog) {
+        CustomScheduleCalendarDialog(
+            initialSchedule = schedulePreferencesRepository.customMonthlySchedule(customMonth),
+            onSave = { schedule ->
+                schedulePreferencesRepository.updateCustomMode()
+                schedulePreferencesRepository.updateCustomMonthlySchedule(schedule)
+                restRule = restDayRepository.currentRule()
+                showCustomScheduleDialog = false
+                Toast.makeText(context, "自定义排班已保存", Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = { showCustomScheduleDialog = false }
         )
     }
 
