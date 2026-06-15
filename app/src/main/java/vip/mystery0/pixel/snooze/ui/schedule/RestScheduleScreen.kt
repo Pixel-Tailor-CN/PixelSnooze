@@ -1,6 +1,7 @@
 package vip.mystery0.pixel.snooze.ui.schedule
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -90,10 +91,14 @@ fun RestScheduleScreen(
         )
     }
     var cycleDaysText by remember(currentRule) {
-        mutableStateOf((currentRule as? RestScheduleRule.HolidayAndCycle)?.cycleDays?.toString() ?: "5")
+        mutableStateOf(
+            (currentRule as? RestScheduleRule.HolidayAndCycle)?.cycleDays?.toString() ?: "5"
+        )
     }
     var todayIndexText by remember(currentRule) {
-        mutableStateOf((currentRule as? RestScheduleRule.HolidayAndCycle)?.anchorDayIndex?.toString() ?: "1")
+        mutableStateOf(
+            (currentRule as? RestScheduleRule.HolidayAndCycle)?.anchorDayIndex?.toString() ?: "1"
+        )
     }
     var cycleRestIndexes by remember(currentRule) {
         mutableStateOf(
@@ -164,7 +169,8 @@ fun RestScheduleScreen(
                             } else {
                                 schedulePreferencesRepository.updateCycle(
                                     cycleDays = cycleDays,
-                                    restDayIndexes = cycleRestIndexes.filter { it in 1..cycleDays }.toSet(),
+                                    restDayIndexes = cycleRestIndexes.filter { it in 1..cycleDays }
+                                        .toSet(),
                                     todayIndex = todayIndex
                                 )
                                 true
@@ -280,14 +286,16 @@ fun RestScheduleScreen(
                             DayOfWeekSelector(
                                 selectedDays = largeWeekRestDays,
                                 onToggle = { day ->
-                                    largeWeekRestDays = largeWeekRestDays.toggle(day).ifEmpty { setOf(day) }
+                                    largeWeekRestDays =
+                                        largeWeekRestDays.toggle(day).ifEmpty { setOf(day) }
                                 }
                             )
                             Text(text = "小周休息日", style = MaterialTheme.typography.titleSmall)
                             DayOfWeekSelector(
                                 selectedDays = smallWeekRestDays,
                                 onToggle = { day ->
-                                    smallWeekRestDays = smallWeekRestDays.toggle(day).ifEmpty { setOf(day) }
+                                    smallWeekRestDays =
+                                        smallWeekRestDays.toggle(day).ifEmpty { setOf(day) }
                                 }
                             )
                             Text(text = "本周类型", style = MaterialTheme.typography.titleSmall)
@@ -404,7 +412,8 @@ private fun ScheduleModeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.Top
     ) {
         RadioButton(selected = selected, onClick = onClick)
@@ -525,4 +534,5 @@ private fun Set<DayOfWeek>.toggle(day: DayOfWeek): Set<DayOfWeek> {
 
 private fun floorMod(x: Long, y: Long): Long = ((x % y) + y) % y
 
-private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("M 月 d 日，EEEE", Locale.CHINA)
+private val dateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("M 月 d 日，EEEE", Locale.CHINA)
