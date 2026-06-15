@@ -247,8 +247,6 @@ fun HomeScreen(
                 Toast.makeText(context, "休息日规则已保存", Toast.LENGTH_SHORT).show()
             },
             onOpenCustomCalendar = {
-                schedulePreferencesRepository.updateCustomMode()
-                restRule = restDayRepository.currentRule()
                 showRestScheduleDialog = false
                 showCustomScheduleDialog = true
             },
