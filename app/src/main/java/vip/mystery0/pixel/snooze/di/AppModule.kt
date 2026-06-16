@@ -13,7 +13,12 @@ import vip.mystery0.pixel.snooze.schedule.RestDayRepository
 import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
 
 val appModule = module {
-    single<HolidayDataSource> { LocalFirstHolidayDataSource(androidContext()) }
+    single<HolidayDataSource> {
+        LocalFirstHolidayDataSource(
+            context = androidContext(),
+            remoteUrlProvider = { get<UserPreferencesRepository>().holidayDataUrl() }
+        )
+    }
     single { HolidayRepository(get()) }
     single { RestSchedulePreferencesRepository(androidContext()) }
     single { RestDayRepository(get(), get()) }

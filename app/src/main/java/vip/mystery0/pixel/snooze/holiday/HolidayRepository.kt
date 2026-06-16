@@ -27,6 +27,27 @@ class HolidayRepository(
         }
     }
 
+    fun refreshFromRemoteUrl(
+        remoteUrl: String,
+        onComplete: (HolidayRefreshResult) -> Unit = {}
+    ) {
+        val refreshableDataSource = dataSource as? RefreshableHolidayDataSource ?: run {
+            onComplete(HolidayRefreshResult(success = false, errorMessage = "当前数据源不支持云端更新"))
+            return
+        }
+        refreshableDataSource.refreshFromRemoteUrl(remoteUrl) { result ->
+            if (result.success) reloadCalendar()
+            onComplete(result)
+        }
+    }
+
+    fun clearCacheAndReload(): Boolean {
+        val refreshableDataSource = dataSource as? RefreshableHolidayDataSource ?: return false
+        refreshableDataSource.clearCache()
+        reloadCalendar()
+        return true
+    }
+
     @Synchronized
     private fun reloadCalendar() {
         calendar = dataSource.loadCalendar()
