@@ -58,11 +58,20 @@ class UserPreferencesRepository(context: Context) {
         preferences.edit { remove(KEY_HOLIDAY_DATA_URL) }
     }
 
+    fun hasSeenOnboardingGuide(): Boolean {
+        return preferences.getBoolean(KEY_ONBOARDING_GUIDE_SEEN, false)
+    }
+
+    fun markOnboardingGuideSeen() {
+        preferences.edit { putBoolean(KEY_ONBOARDING_GUIDE_SEEN, true) }
+    }
+
     companion object {
         const val DEFAULT_KEYWORD = "节假日闹钟"
         private const val KEY_ALARM_KEYWORD = "alarm_keyword"
         private const val KEY_DISMISS_WORDS = "dismiss_words"
         private const val KEY_HOLIDAY_DATA_URL = "holiday_data_url"
+        private const val KEY_ONBOARDING_GUIDE_SEEN = "onboarding_guide_seen"
     }
 }
 

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +84,9 @@ fun HomeScreen(
     var showKeywordDialog by remember { mutableStateOf(false) }
     var showDismissWordsDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
+    var showOnboardingGuideDialog by remember {
+        mutableStateOf(!preferencesRepository.hasSeenOnboardingGuide())
+    }
     var isRefreshingCalendar by remember { mutableStateOf(false) }
     var calendar by remember { mutableStateOf(holidayRepository.currentCalendar()) }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
@@ -112,6 +116,12 @@ fun HomeScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = { showOnboardingGuideDialog = true }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.HelpOutline,
+                            contentDescription = "使用引导"
+                        )
+                    }
                     IconButton(
                         onClick = {
                             context.openUrl("https://github.com/Pixel-Tailor-CN/PixelSnooze")
@@ -186,6 +196,22 @@ fun HomeScreen(
 
             AlarmHistoryContent(historySnapshot)
         }
+    }
+
+    if (showOnboardingGuideDialog) {
+        OnboardingGuideDialog(
+            listenerEnabled = listenerEnabled,
+            onOpenNotificationListenerSettings = {
+                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            },
+            onOpenRestSchedule = {
+                onOpenRestSchedule()
+            },
+            onDismiss = {
+                preferencesRepository.markOnboardingGuideSeen()
+                showOnboardingGuideDialog = false
+            }
+        )
     }
 
     if (showKeywordDialog) {
