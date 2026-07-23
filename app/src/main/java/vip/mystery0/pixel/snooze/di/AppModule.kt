@@ -11,6 +11,9 @@ import vip.mystery0.pixel.snooze.notification.AlarmNotificationParser
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
 import vip.mystery0.pixel.snooze.schedule.RestDayRepository
 import vip.mystery0.pixel.snooze.schedule.RestSchedulePreferencesRepository
+import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestPreferencesRepository
+import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestManager
+import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestStatusNotification
 
 val appModule = module {
     single<HolidayDataSource> {
@@ -21,7 +24,10 @@ val appModule = module {
     }
     single { HolidayRepository(get()) }
     single { RestSchedulePreferencesRepository(androidContext()) }
-    single { RestDayRepository(get(), get()) }
+    single { TemporaryRestPreferencesRepository(androidContext()) }
+    single { TemporaryRestStatusNotification(androidContext()) }
+    single { TemporaryRestManager(androidContext(), get(), get()) }
+    single { RestDayRepository(get(), get(), get()) }
     single { AlarmNotificationParser() }
     single { AlarmDismissActionFinder() }
     single { UserPreferencesRepository(androidContext()) }

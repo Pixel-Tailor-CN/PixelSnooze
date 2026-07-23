@@ -5,15 +5,14 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- 临时休息状态不应在设备恢复后继续生效。 -->
+        <exclude
+            domain="sharedpref"
+            path="pixel_snooze_temporary_rest_preferences.xml" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude
+            domain="sharedpref"
+            path="pixel_snooze_temporary_rest_preferences.xml" />
     </device-transfer>
-    -->
 </data-extraction-rules>

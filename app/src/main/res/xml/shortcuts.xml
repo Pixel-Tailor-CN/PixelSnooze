@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="temporary_rest_today"
+        android:enabled="true"
+        android:icon="@drawable/ic_temporary_rest_shortcut"
+        android:shortcutLongLabel="@string/temporary_rest_today_shortcut_long"
+        android:shortcutShortLabel="@string/temporary_rest_today_shortcut">
+        <intent
+            android:action="vip.mystery0.pixel.snooze.action.ENABLE_TEMPORARY_REST_TODAY"
+            android:targetClass="vip.mystery0.pixel.snooze.MainActivity"
+            android:targetPackage="@string/shortcut_target_package" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="temporary_rest_disable"
+        android:enabled="true"
+        android:icon="@drawable/ic_temporary_rest_shortcut"
+        android:shortcutLongLabel="@string/temporary_rest_disable_shortcut_long"
+        android:shortcutShortLabel="@string/temporary_rest_disable_shortcut">
+        <intent
+            android:action="vip.mystery0.pixel.snooze.action.DISABLE_TEMPORARY_REST"
+            android:targetClass="vip.mystery0.pixel.snooze.MainActivity"
+            android:targetPackage="@string/shortcut_target_package" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="temporary_rest_manage"
+        android:enabled="true"
+        android:icon="@drawable/ic_temporary_rest_shortcut"
+        android:shortcutLongLabel="@string/temporary_rest_manage_shortcut_long"
+        android:shortcutShortLabel="@string/temporary_rest_manage_shortcut">
+        <intent
+            android:action="vip.mystery0.pixel.snooze.action.MANAGE_TEMPORARY_REST"
+            android:targetClass="vip.mystery0.pixel.snooze.MainActivity"
+            android:targetPackage="@string/shortcut_target_package" />
+    </shortcut>
+</shortcuts>

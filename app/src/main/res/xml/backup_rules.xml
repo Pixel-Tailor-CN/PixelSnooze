@@ -6,8 +6,8 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- 临时休息状态不应在设备恢复后继续生效。 -->
+    <exclude
+        domain="sharedpref"
+        path="pixel_snooze_temporary_rest_preferences.xml" />
 </full-backup-content>

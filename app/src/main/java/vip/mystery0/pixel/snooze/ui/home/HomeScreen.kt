@@ -1,13 +1,18 @@
 package vip.mystery0.pixel.snooze.ui.home
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -60,6 +66,8 @@ import vip.mystery0.pixel.snooze.notification.PixelSnoozeNotificationListenerSer
 import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
 import vip.mystery0.pixel.snooze.schedule.RestDayRepository
 import vip.mystery0.pixel.snooze.schedule.summaryText
+import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestManager
+import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestState
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -70,9 +78,13 @@ fun HomeScreen(
     holidayRepository: HolidayRepository,
     preferencesRepository: UserPreferencesRepository,
     restDayRepository: RestDayRepository,
+    temporaryRestManager: TemporaryRestManager,
     historyRepository: AlarmHistoryRepository,
     onOpenRestSchedule: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    showTemporaryRestDialog: Boolean,
+    onShowTemporaryRestDialog: () -> Unit,
+    onHideTemporaryRestDialog: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -81,6 +93,9 @@ fun HomeScreen(
     var keyword by remember { mutableStateOf(preferencesRepository.keyword()) }
     var dismissWordsText by remember { mutableStateOf(preferencesRepository.dismissWordsText()) }
     var restRule by remember { mutableStateOf(restDayRepository.currentRule()) }
+    var temporaryRestState by remember {
+        mutableStateOf(temporaryRestManager.currentState())
+    }
     var showKeywordDialog by remember { mutableStateOf(false) }
     var showDismissWordsDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
@@ -90,18 +105,53 @@ fun HomeScreen(
     var isRefreshingCalendar by remember { mutableStateOf(false) }
     var calendar by remember { mutableStateOf(holidayRepository.currentCalendar()) }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) {
+        temporaryRestManager.refreshSurfaces()
+        temporaryRestState = temporaryRestManager.currentState()
+    }
 
-    DisposableEffect(lifecycleOwner, context, historyRepository, holidayRepository, restDayRepository) {
+    fun requestNotificationPermissionIfNeeded() {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED &&
+            temporaryRestManager.shouldRequestNotificationPermission()
+        ) {
+            temporaryRestManager.markNotificationPermissionRequested()
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    DisposableEffect(
+        lifecycleOwner,
+        context,
+        historyRepository,
+        holidayRepository,
+        restDayRepository,
+        temporaryRestManager
+    ) {
+        val temporaryRestStateListener: (TemporaryRestState) -> Unit = { state ->
+            mainHandler.post {
+                temporaryRestState = state
+            }
+        }
+        temporaryRestManager.addStateListener(temporaryRestStateListener)
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 listenerEnabled = isNotificationListenerEnabled(context)
                 historySnapshot = historyRepository.snapshot()
                 restRule = restDayRepository.currentRule()
+                temporaryRestState = temporaryRestManager.currentState()
                 calendar = holidayRepository.currentCalendar()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
+            temporaryRestManager.removeStateListener(temporaryRestStateListener)
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
@@ -158,6 +208,21 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyLarge
             )
 
+            TemporaryRestCard(
+                state = temporaryRestState,
+                onCheckedChange = { enabled ->
+                    if (enabled) {
+                        temporaryRestManager.enableToday()
+                        requestNotificationPermissionIfNeeded()
+                    } else {
+                        temporaryRestManager.disable()
+                    }
+                    temporaryRestState = temporaryRestManager.currentState()
+                },
+                onConfigure = onShowTemporaryRestDialog,
+                onAddTile = { requestTemporaryRestTile(context) }
+            )
+
             StatusRow(
                 label = "通知监听",
                 value = if (listenerEnabled) "已启用" else "未启用",
@@ -211,6 +276,36 @@ fun HomeScreen(
                 preferencesRepository.markOnboardingGuideSeen()
                 showOnboardingGuideDialog = false
             }
+        )
+    }
+
+    if (showTemporaryRestDialog) {
+        TemporaryRestDurationDialog(
+            state = temporaryRestState,
+            onEnableToday = {
+                temporaryRestManager.enableToday()
+                temporaryRestState = temporaryRestManager.currentState()
+                requestNotificationPermissionIfNeeded()
+                onHideTemporaryRestDialog()
+            },
+            onEnableUntil = { endDate ->
+                temporaryRestManager.enableUntil(endDate)
+                temporaryRestState = temporaryRestManager.currentState()
+                requestNotificationPermissionIfNeeded()
+                onHideTemporaryRestDialog()
+            },
+            onEnableUntilDisabled = {
+                temporaryRestManager.enableUntilDisabled()
+                temporaryRestState = temporaryRestManager.currentState()
+                requestNotificationPermissionIfNeeded()
+                onHideTemporaryRestDialog()
+            },
+            onDisable = {
+                temporaryRestManager.disable()
+                temporaryRestState = TemporaryRestState.Disabled
+                onHideTemporaryRestDialog()
+            },
+            onDismiss = onHideTemporaryRestDialog
         )
     }
 

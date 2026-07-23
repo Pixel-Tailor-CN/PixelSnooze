@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Pixel Snooze Debug</string>
+    <string name="shortcut_target_package" translatable="false">vip.mystery0.pixel.snooze.debug</string>
 </resources>

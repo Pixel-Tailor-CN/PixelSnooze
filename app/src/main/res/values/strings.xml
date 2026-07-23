@@ -2,4 +2,12 @@
     <string name="app_name">Pixel Snooze</string>
     <string name="settings_title">设置</string>
     <string name="rest_schedule_title">休息日规则</string>
+    <string name="temporary_rest_tile_label">临时休息</string>
+    <string name="temporary_rest_today_shortcut">休息一天</string>
+    <string name="temporary_rest_today_shortcut_long">开启仅今天的临时休息</string>
+    <string name="temporary_rest_disable_shortcut">关闭休息</string>
+    <string name="temporary_rest_disable_shortcut_long">关闭临时休息模式</string>
+    <string name="temporary_rest_manage_shortcut">管理休息</string>
+    <string name="temporary_rest_manage_shortcut_long">管理临时休息时长</string>
+    <string name="shortcut_target_package" translatable="false">vip.mystery0.pixel.snooze</string>
 </resources>
