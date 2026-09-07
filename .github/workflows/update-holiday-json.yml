@@ -23,12 +23,34 @@ jobs:
           python - <<'PY'
           import datetime
           import json
+          import time
           import urllib.error
           import urllib.request
           from pathlib import Path
 
           SOURCE_URL = "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json"
           OUTPUT_PATH = Path("json/holiday.json")
+          MAX_RETRIES = 3
+
+          def fetch_holiday_data(url):
+              # 首次请求失败后最多重试三次，仅重试网络和临时服务错误。
+              for attempt in range(MAX_RETRIES + 1):
+                  try:
+                      with urllib.request.urlopen(url, timeout=30) as response:
+                          return json.load(response)
+                  except (urllib.error.URLError, OSError) as error:
+                      if isinstance(error, urllib.error.HTTPError):
+                          if error.code not in (408, 429) and not 500 <= error.code < 600:
+                              raise
+                      if attempt == MAX_RETRIES:
+                          raise
+                      delay = 2 ** (attempt + 1)
+                      print(
+                          f"Download failed: {url}: {error}. "
+                          f"Retry {attempt + 1}/{MAX_RETRIES} in {delay}s",
+                          flush=True,
+                      )
+                      time.sleep(delay)
 
           current_year = datetime.date.today().year
           years = range(current_year - 1, current_year + 2)
@@ -38,8 +60,7 @@ jobs:
               holidays = set()
               url = SOURCE_URL.format(year=year)
               try:
-                  with urllib.request.urlopen(url, timeout=30) as response:
-                      payload = json.load(response)
+                  payload = fetch_holiday_data(url)
               except urllib.error.HTTPError as error:
                   if error.code == 404:
                       print(f"Skip missing holiday data: {year}")
