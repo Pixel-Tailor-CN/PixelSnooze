@@ -20,7 +20,11 @@ class RestDayRepository(
         if (rule is RestScheduleRule.Custom) {
             return rule.isScheduleRestDay(date)
         }
-        if (date in holidayRepository.currentCalendar().holidays) {
+        val calendar = holidayRepository.currentCalendar()
+        if (date in calendar.workdays) {
+            return false
+        }
+        if (date in calendar.holidays) {
             return true
         }
         return rule.isScheduleRestDay(date)
