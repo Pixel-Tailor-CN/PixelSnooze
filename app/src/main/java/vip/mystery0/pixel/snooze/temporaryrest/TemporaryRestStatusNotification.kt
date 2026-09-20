@@ -102,11 +102,11 @@ class TemporaryRestStatusNotification(
             }
         }
 
-        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+        notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
     fun cancel() {
-        notificationManager.cancel(NOTIFICATION_ID)
+        notificationManager?.cancel(NOTIFICATION_ID)
     }
 
     private fun createChannel() {
@@ -119,7 +119,7 @@ class TemporaryRestStatusNotification(
             setSound(null, null)
             enableVibration(false)
         }
-        notificationManager.createNotificationChannel(channel)
+        notificationManager?.createNotificationChannel(channel)
     }
 
     private companion object {

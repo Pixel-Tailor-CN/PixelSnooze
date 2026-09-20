@@ -1,6 +1,7 @@
 package vip.mystery0.pixel.snooze
 
 import android.app.Application
+import android.util.Log
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import vip.mystery0.pixel.snooze.di.appModule
@@ -14,7 +15,15 @@ class PixelSnoozeApplication : Application() {
             androidContext(this@PixelSnoozeApplication)
             modules(appModule)
         }
-        koinApplication.koin.get<TemporaryRestManager>().refreshSurfaces()
-        koinApplication.koin.get<HolidayReminderScheduler>().scheduleNextReminder()
+        runCatching {
+            koinApplication.koin.get<TemporaryRestManager>().refreshSurfaces()
+            koinApplication.koin.get<HolidayReminderScheduler>().scheduleNextReminder()
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to initialize startup services", error)
+        }
+    }
+
+    private companion object {
+        const val TAG = "PixelSnoozeApp"
     }
 }

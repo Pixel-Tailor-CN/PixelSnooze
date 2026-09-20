@@ -22,6 +22,10 @@ class HolidayReminderScheduler(
             cancelReminder()
             return
         }
+        val manager = alarmManager ?: run {
+            Log.w(TAG, "AlarmManager not available")
+            return
+        }
 
         val hour = preferencesRepository.holidayReminderHour()
         val minute = preferencesRepository.holidayReminderMinute()
@@ -34,18 +38,14 @@ class HolidayReminderScheduler(
         val triggerMillis = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val pendingIntent = requireNotNull(getPendingIntent(PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent)
-        } else {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent)
-        }
+        manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent)
         Log.i(TAG, "Scheduled reminder check at $next ($triggerMillis)")
     }
 
     fun cancelReminder() {
         val pendingIntent = getPendingIntent(PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
         if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
+            alarmManager?.cancel(pendingIntent)
             pendingIntent.cancel()
             Log.i(TAG, "Cancelled reminder check alarm")
         }

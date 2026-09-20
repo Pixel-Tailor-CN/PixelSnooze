@@ -23,8 +23,8 @@ class HolidayReminderNotification(
         context.getSystemService(NotificationManager::class.java)
 
     fun showWorkdayReminder(date: LocalDate) {
-        if (!hasNotificationPermission()) {
-            Log.w(TAG, "Notification permission not granted for workday reminder")
+        if (!hasNotificationPermission() || notificationManager == null) {
+            Log.w(TAG, "Notification permission not granted or NotificationManager unavailable")
             return
         }
         createChannel()
@@ -34,8 +34,8 @@ class HolidayReminderNotification(
     }
 
     fun showHolidayReminder(date: LocalDate) {
-        if (!hasNotificationPermission()) {
-            Log.w(TAG, "Notification permission not granted for holiday reminder")
+        if (!hasNotificationPermission() || notificationManager == null) {
+            Log.w(TAG, "Notification permission not granted or NotificationManager unavailable")
             return
         }
         createChannel()
@@ -45,8 +45,8 @@ class HolidayReminderNotification(
     }
 
     fun cancelAll() {
-        notificationManager.cancel(NOTIFICATION_ID_WORKDAY)
-        notificationManager.cancel(NOTIFICATION_ID_HOLIDAY)
+        notificationManager?.cancel(NOTIFICATION_ID_WORKDAY)
+        notificationManager?.cancel(NOTIFICATION_ID_HOLIDAY)
     }
 
     private fun notify(notificationId: Int, title: String, content: String) {
