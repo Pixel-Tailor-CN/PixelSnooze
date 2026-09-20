@@ -9,8 +9,9 @@ Pixel Snooze 是一款本地优先、低侵入的 Android 辅助工具，用于�
 
 - 仅判断今天是否为休息日，不判断明天或其他日期。
 - 支持多种本地休息日规则：节假日 + 双休、节假日 + 单休、节假日 + 大小周、节假日 + 上 x 休 y、完全自定义。
-- 节假日数据仍只来自 `holiday.json` 中的 `holidays` 集合。
-- 完全自定义模式只使用用户手动标记的休息日，不叠加节假日数据。
+- 节假日数据来自 `holiday.json` 中的 `holidays` 和 `workdays` 集合。
+- `workdays` 表示调休上班日；在节假日叠加规则下，调休上班日优先于双休、单休、大小周和周期休息。
+- 完全自定义模式只使用用户手动标记的休息日，不叠加节假日或调休上班数据。
 - 仅处理 Google/AOSP 时钟应用通知：
     - `com.google.android.deskclock`
     - `com.android.deskclock`
@@ -65,8 +66,8 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 应用会在用户保存自定义数据地址时先请求该地址做可用性检测，检测通过后立即缓存一份数据并保存 URL。后续只有在用户手动点击调休日历弹窗中的“更新”按钮时，才会再次请求当前配置的数据地址；应用不会在启动时自动后台拉取。
 
 仓库中的 `json/holiday.json` 由 GitHub Actions 更新。workflow 每天北京时间 03:00 执行，也支持手动触发。执行时会从
-`NateScarlet/holiday-cn` 获取去年、今年和明年的 `yyyy.json`，提取其中的休息日并写入本仓库的
-`json/holiday.json`。如果文件内容有变化，workflow 会自动提交。
+`NateScarlet/holiday-cn` 获取去年、今年和明年的 `yyyy.json`，把 `isOffDay: true` 写入 `holidays`、把
+`isOffDay: false` 写入 `workdays`。如果文件内容有变化，workflow 会自动提交。
 
 ### 数据格式
 
@@ -78,6 +79,9 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
     "year": 2026,
     "holidays": [
       "2026-01-01"
+    ],
+    "workdays": [
+      "2026-09-20"
     ]
   }
 ]
@@ -85,9 +89,12 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 
 判断规则：
 
+- 每一年份项必须有整数字段 `year`。
 - 日期存在于任一年份项的 `holidays` 中时，视为节假日休息日。
+- 日期存在于任一年份项的 `workdays` 中时，视为调休上班日，不再按周末或固定休息日跳过闹钟。
+- 缺少 `holidays` 或 `workdays` 时，按空集合处理。
 - 用户排班规则保存在本地，和 `holiday.json` 分离。
-- `holiday.json` 不包含其他日期分类。
+- 完全自定义模式不读取 `holidays` 和 `workdays`。
 
 ## 主页面
 
@@ -99,7 +106,7 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 - 关键词状态行，点击后弹出输入对话框。
 - 跳过按钮文本状态行，点击后弹出输入对话框。
 - 休息日规则状态行，点击后配置双休、单休、大小周、上 x 休 y 或完全自定义。
-- 调休日历状态行，点击后弹出可滚动的日历详情弹窗。
+- 调休日历状态行，点击后弹出可滚动的日历详情弹窗，分别展示休息日和调休上班日。
 - 调休日历弹窗中的手动更新按钮。
 - 通知监听设置入口，已开启通知监听时按钮会禁用并显示已开启状态。
 - 自动跳过闹钟记录，当前最多保留最近 10 条。
@@ -201,8 +208,8 @@ app/src/main/java/vip/mystery0/pixel/snooze
 - `PixelSnoozeNotificationListenerService`：通知监听入口，负责过滤目标时钟应用通知并执行跳过流程。
 - `AlarmNotificationParser`：读取通知标题和正文，并判断是否命中关键词。
 - `AlarmDismissActionFinder`：从通知 actions 中查找匹配的跳过或关闭操作。
-- `HolidayRepository`：加载和刷新节假日休息日数据，并暴露当前调休日历数据。
-- `RestDayRepository`：组合临时休息状态、节假日休息日数据和用户本地规则，判断今天是否休息。
+- `HolidayRepository`：加载和刷新节假日休息日与调休上班日数据，并暴露当前调休日历数据。
+- `RestDayRepository`：组合临时休息状态、节假日数据、调休上班日和用户本地规则，判断今天是否休息。
 - `RestSchedulePreferencesRepository`：使用 `SharedPreferences` 保存用户选择的休息日规则和自定义日期。
 - `TemporaryRestManager`：统一管理临时休息状态变更，并同步状态通知和快捷设置磁贴。
 - `TemporaryRestPreferencesRepository`：使用 `SharedPreferences` 保存临时休息模式和结束日期。
@@ -249,5 +256,5 @@ SIGN_KEY_PASSWORD=your-key-password
 - 当前仅适配 Google/AOSP 时钟应用包名。
 - 是否能跳过闹钟取决于目标时钟通知是否提供可用的通知操作。
 - 不同 ROM 或不同版本时钟应用的通知按钮文案可能不同，需要通过“跳过按钮文本”配置适配。
-- 调休日历只保存节假日休息日集合，用户排班规则单独保存在本地。
+- 调休日历保存节假日休息日和调休上班日集合，用户排班规则单独保存在本地。
 - 本项目当前不要求单元测试，默认验证方式为 Android 构建、lint 和必要的人工检查。

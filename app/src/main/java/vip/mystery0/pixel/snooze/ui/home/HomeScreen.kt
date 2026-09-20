@@ -245,7 +245,7 @@ fun HomeScreen(
             )
             StatusRow(
                 label = "调休日历",
-                value = "${calendar.yearRangeText()}，${calendar.holidayCount()} 个休息日",
+                value = calendar.summaryText(),
                 onClick = { showCalendarDialog = true }
             )
 
@@ -551,19 +551,39 @@ private fun HolidayCalendarDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${calendar.yearRangeText()}，共 ${calendar.holidayCount()} 个休息日",
+                    text = calendar.summaryText(),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 calendar.years.forEach { yearData ->
                     Text(
-                        text = "${yearData.year} 年（${yearData.holidayCount()} 个）",
+                        text = "${yearData.year} 年（休息 ${yearData.holidayCount()}，调休上班 ${yearData.workdayCount()}）",
                         style = MaterialTheme.typography.titleSmall
                     )
-                    yearData.holidays.sorted().forEach { date ->
+                    if (yearData.holidays.isNotEmpty()) {
                         Text(
-                            text = date.format(calendarDateFormatter),
-                            style = MaterialTheme.typography.bodyMedium
+                            text = "休息日",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        yearData.holidays.sorted().forEach { date ->
+                            Text(
+                                text = date.format(calendarDateFormatter),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                    if (yearData.workdays.isNotEmpty()) {
+                        Text(
+                            text = "调休上班",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        yearData.workdays.sorted().forEach { date ->
+                            Text(
+                                text = date.format(calendarDateFormatter),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
@@ -627,6 +647,10 @@ private fun HolidayCalendar.yearRangeText(): String {
     } else {
         "$firstYear-$lastYear 年"
     }
+}
+
+private fun HolidayCalendar.summaryText(): String {
+    return "${yearRangeText()}，${holidayCount()} 个休息日，${workdayCount()} 个调休上班"
 }
 
 private fun String.toSingleLineSummary(): String {

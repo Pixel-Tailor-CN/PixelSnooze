@@ -31,7 +31,8 @@ class AssetHolidayDataSource(
                         add(
                             HolidayYear(
                                 year = yearJson.getInt("year"),
-                                holidays = yearJson.getJSONArray("holidays").toDateSet(),
+                                holidays = yearJson.optJSONArray("holidays").toDateSet(),
+                                workdays = yearJson.optJSONArray("workdays").toDateSet(),
                             )
                         )
                     }
@@ -41,7 +42,8 @@ class AssetHolidayDataSource(
     }
 }
 
-private fun JSONArray.toDateSet(): Set<LocalDate> {
+private fun JSONArray?.toDateSet(): Set<LocalDate> {
+    if (this == null) return emptySet()
     return buildSet {
         for (index in 0 until length()) {
             add(LocalDate.parse(getString(index)))
