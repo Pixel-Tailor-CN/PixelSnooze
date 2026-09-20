@@ -45,17 +45,15 @@ Pixel Snooze 支持使用用户指定的云端地址获取节假日数据。这�
     ]
   },
   {
-    "year": 2027,
-    "holidays": [],
-    "workdays": []
+    "year": 2027
   }
 ]
 ```
 
 字段含义：
 
-- `year`：年份，必须是整数，例如 `2026`。
-- `holidays`：该年份内应被视为节假日休息日的日期数组。
+- `year`：年份，必须存在，必须是整数，例如 `2026`。
+- `holidays`：该年份内应被视为节假日休息日的日期数组。缺少该字段时按空数组处理。
 - `workdays`：该年份内应被视为调休上班日的日期数组。缺少该字段时按空数组处理。
 
 日期格式要求：
@@ -83,19 +81,17 @@ Pixel Snooze 运行时只判断今天是否休息：
 - 今年：保证当前判断可用。
 - 明年：避免新年后短期没有数据。
 
-如果未来年份还没有发布，可以先保留该年份并使用空数组：
+如果未来年份还没有发布，可以只保留 `year`：
 
 ```json
 [
   {
-    "year": 2027,
-    "holidays": [],
-    "workdays": []
+    "year": 2027
   }
 ]
 ```
 
-空数组表示该年份暂时没有由节假日数据标记的休息日期或调休上班日。
+这表示该年份暂时没有由节假日数据标记的休息日期或调休上班日。
 
 ## 生成建议
 
@@ -103,7 +99,7 @@ Pixel Snooze 运行时只判断今天是否休息：
 
 1. 从当地官方或可信来源收集实际休息日期。
 2. 分别保留需要视为休息日和调休上班日的日期。
-3. 按年份分组写入 `year`、`holidays` 和 `workdays`。
+3. 按年份分组写入 `year`，按需要再写 `holidays` 和 `workdays`。
 4. 对每个日期使用 `yyyy-MM-dd` 格式。
 5. 按日期从早到晚排序，方便人工检查。
 6. 使用 JSON 校验工具确认文件合法。
@@ -135,7 +131,7 @@ https://raw.githubusercontent.com/example/holiday-data/refs/heads/main/holiday.j
 - 浏览器可以直接打开这个 URL。
 - 打开后看到的是 JSON 文本，不是网页预览。
 - JSON 顶层是数组。
-- 每个年份项都有 `year` 和 `holidays`；`workdays` 可选。
+- 每个年份项都有 `year`；`holidays` 和 `workdays` 都可选。
 - 每个日期都使用 `yyyy-MM-dd`。
 - 文件中包含当前年份。
 - 当前日期如果应该休息，已经出现在对应年份的 `holidays` 中。
@@ -145,7 +141,7 @@ https://raw.githubusercontent.com/example/holiday-data/refs/heads/main/holiday.j
 
 ### 可以在 JSON 里写节日名称吗？
 
-不需要。Pixel Snooze 当前只读取 `year`、`holidays` 和可选的 `workdays`，不会显示或使用节日名称。
+不需要。Pixel Snooze 当前只读取 `year`、可选的 `holidays` 和可选的 `workdays`，不会显示或使用节日名称。
 
 ### 可以只维护一个年份吗？
 

@@ -89,9 +89,10 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 
 判断规则：
 
+- 每一年份项必须有整数字段 `year`。
 - 日期存在于任一年份项的 `holidays` 中时，视为节假日休息日。
 - 日期存在于任一年份项的 `workdays` 中时，视为调休上班日，不再按周末或固定休息日跳过闹钟。
-- 缺少 `workdays` 字段时，按空集合处理，保持旧数据兼容。
+- 缺少 `holidays` 或 `workdays` 时，按空集合处理。
 - 用户排班规则保存在本地，和 `holiday.json` 分离。
 - 完全自定义模式不读取 `holidays` 和 `workdays`。
 
