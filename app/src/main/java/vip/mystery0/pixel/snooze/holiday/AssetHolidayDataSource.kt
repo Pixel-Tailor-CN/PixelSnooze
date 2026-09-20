@@ -31,7 +31,7 @@ class AssetHolidayDataSource(
                         add(
                             HolidayYear(
                                 year = yearJson.getInt("year"),
-                                holidays = yearJson.getJSONArray("holidays").toDateSet(),
+                                holidays = yearJson.optJSONArray("holidays").toDateSet(),
                                 workdays = yearJson.optJSONArray("workdays").toDateSet(),
                             )
                         )
