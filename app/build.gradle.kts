@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.material.icons.extended)
     implementation(libs.zhanghai.preference)
+    implementation(libs.androidx.glance.appwidget)
     implementation(libs.koin.android)
 
     debugImplementation(libs.androidx.compose.ui.tooling)

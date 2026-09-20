@@ -56,6 +56,23 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.HolidaySnoozeWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="vip.mystery0.pixel.snooze.action.REFRESH_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_holiday_snooze_info" />
+        </receiver>
+
         <activity
             android:name=".SettingsActivity"
             android:exported="false"

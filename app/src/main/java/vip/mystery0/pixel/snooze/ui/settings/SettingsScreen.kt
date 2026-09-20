@@ -54,6 +54,10 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.core.content.ContextCompat
 import me.zhanghai.compose.preference.SwitchPreference
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import androidx.compose.material.icons.rounded.Widgets
+import vip.mystery0.pixel.snooze.widget.HolidaySnoozeWidgetReceiver
 import vip.mystery0.pixel.snooze.reminder.HolidayReminderScheduler
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
@@ -203,6 +207,24 @@ fun SettingsScreen(
                         },
                         onClick = {
                             showTimePickerDialog()
+                        }
+                    )
+                }
+                item(key = "add_desktop_widget", contentType = "Preference") {
+                    Preference(
+                        title = { Text("添加桌面小部件") },
+                        summary = { Text("将作息与闹钟预告小部件添加到主屏幕") },
+                        icon = {
+                            Icon(Icons.Rounded.Widgets, contentDescription = null)
+                        },
+                        onClick = {
+                            val appWidgetManager = context.getSystemService(AppWidgetManager::class.java)
+                            if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                                val provider = ComponentName(context, HolidaySnoozeWidgetReceiver::class.java)
+                                appWidgetManager.requestPinAppWidget(provider, null, null)
+                            } else {
+                                Toast.makeText(context, "当前桌面不支持自动添加小部件，请长按桌面手动添加", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                 }

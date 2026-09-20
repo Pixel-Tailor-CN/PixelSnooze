@@ -10,4 +10,6 @@
     <string name="temporary_rest_manage_shortcut">管理休息</string>
     <string name="temporary_rest_manage_shortcut_long">管理临时休息时长</string>
     <string name="shortcut_target_package" translatable="false">vip.mystery0.pixel.snooze</string>
+    <string name="widget_name">作息与闹钟预告</string>
+    <string name="widget_description">展示下一次闹钟作息预告与跳过状态，支持快捷开关临时休息</string>
 </resources>

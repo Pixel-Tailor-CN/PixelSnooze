@@ -2,7 +2,9 @@ package vip.mystery0.pixel.snooze.temporaryrest
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.service.quicksettings.TileService
+import vip.mystery0.pixel.snooze.widget.HolidaySnoozeWidgetReceiver
 import java.time.LocalDate
 import java.util.concurrent.CopyOnWriteArraySet
 
@@ -81,13 +83,22 @@ class TemporaryRestManager(
         val state = currentState()
         statusNotification.sync(state, todayProvider())
         requestTileUpdate()
+        requestWidgetUpdate()
     }
 
     private fun updateState(state: TemporaryRestState) {
         preferencesRepository.updateState(state)
         statusNotification.sync(state, todayProvider())
         requestTileUpdate()
+        requestWidgetUpdate()
         notifyStateChanged(state)
+    }
+
+    private fun requestWidgetUpdate() {
+        val intent = Intent(context, HolidaySnoozeWidgetReceiver::class.java).apply {
+            action = HolidaySnoozeWidgetReceiver.ACTION_REFRESH_WIDGET
+        }
+        context.sendBroadcast(intent)
     }
 
     private fun requestTileUpdate() {
