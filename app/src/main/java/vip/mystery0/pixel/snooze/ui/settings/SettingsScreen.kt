@@ -44,6 +44,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import android.Manifest
+import android.app.TimePickerDialog
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.core.content.ContextCompat
+import me.zhanghai.compose.preference.SwitchPreference
+import vip.mystery0.pixel.snooze.reminder.HolidayReminderScheduler
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import me.zhanghai.compose.preference.preferenceCategory
@@ -58,6 +69,7 @@ import vip.mystery0.pixel.snooze.preferences.UserPreferencesRepository
 fun SettingsScreen(
     holidayRepository: HolidayRepository,
     preferencesRepository: UserPreferencesRepository,
+    holidayReminderScheduler: HolidayReminderScheduler,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -67,6 +79,70 @@ fun SettingsScreen(
         mutableStateOf(preferencesRepository.isUsingDefaultHolidayDataUrl())
     }
     var showHolidayDataUrlDialog by remember { mutableStateOf(false) }
+
+    var isReminderEnabled by remember {
+        mutableStateOf(preferencesRepository.isHolidayReminderEnabled())
+    }
+    var reminderHour by remember {
+        mutableStateOf(preferencesRepository.holidayReminderHour())
+    }
+    var reminderMinute by remember {
+        mutableStateOf(preferencesRepository.holidayReminderMinute())
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            preferencesRepository.updateHolidayReminderEnabled(true)
+            holidayReminderScheduler.scheduleNextReminder()
+            isReminderEnabled = true
+            Toast.makeText(context, "已开启调休与节假日提醒", Toast.LENGTH_SHORT).show()
+        } else {
+            preferencesRepository.updateHolidayReminderEnabled(false)
+            holidayReminderScheduler.cancelReminder()
+            isReminderEnabled = false
+            Toast.makeText(context, "未授予通知权限，无法开启提醒", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun onToggleReminder(enabled: Boolean) {
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                preferencesRepository.updateHolidayReminderEnabled(true)
+                holidayReminderScheduler.scheduleNextReminder()
+                isReminderEnabled = true
+            }
+        } else {
+            preferencesRepository.updateHolidayReminderEnabled(false)
+            holidayReminderScheduler.cancelReminder()
+            isReminderEnabled = false
+        }
+    }
+
+    fun showTimePickerDialog() {
+        TimePickerDialog(
+            context,
+            { _, selectedHour, selectedMinute ->
+                preferencesRepository.updateHolidayReminderTime(selectedHour, selectedMinute)
+                reminderHour = selectedHour
+                reminderMinute = selectedMinute
+                if (isReminderEnabled) {
+                    holidayReminderScheduler.scheduleNextReminder()
+                }
+            },
+            reminderHour,
+            reminderMinute,
+            true
+        ).show()
+    }
 
     Scaffold(
         topBar = {
@@ -100,6 +176,37 @@ fun SettingsScreen(
                     bottom = 24.dp
                 )
             ) {
+                preferenceCategory(
+                    key = "category_holiday_reminder",
+                    title = { Text("提醒通知") }
+                )
+                item(key = "holiday_reminder_enabled", contentType = "SwitchPreference") {
+                    SwitchPreference(
+                        value = isReminderEnabled,
+                        onValueChange = { onToggleReminder(it) },
+                        title = { Text("调休与节假日提醒") },
+                        summary = { Text("在调休上班或节假日休息的前一天发出通知提醒") },
+                        icon = {
+                            Icon(Icons.Rounded.Notifications, contentDescription = null)
+                        }
+                    )
+                }
+                item(key = "holiday_reminder_time", contentType = "Preference") {
+                    Preference(
+                        title = { Text("提醒时间") },
+                        summary = {
+                            Text("前一天 %02d:%02d".format(reminderHour, reminderMinute))
+                        },
+                        enabled = isReminderEnabled,
+                        icon = {
+                            Icon(Icons.Rounded.Schedule, contentDescription = null)
+                        },
+                        onClick = {
+                            showTimePickerDialog()
+                        }
+                    )
+                }
+
                 preferenceCategory(
                     key = "category_holiday_data",
                     title = { Text("节假日数据") }

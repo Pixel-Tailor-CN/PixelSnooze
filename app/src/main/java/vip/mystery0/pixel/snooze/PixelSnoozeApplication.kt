@@ -4,6 +4,7 @@ import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import vip.mystery0.pixel.snooze.di.appModule
+import vip.mystery0.pixel.snooze.reminder.HolidayReminderScheduler
 import vip.mystery0.pixel.snooze.temporaryrest.TemporaryRestManager
 
 class PixelSnoozeApplication : Application() {
@@ -14,5 +15,6 @@ class PixelSnoozeApplication : Application() {
             modules(appModule)
         }
         koinApplication.koin.get<TemporaryRestManager>().refreshSurfaces()
+        koinApplication.koin.get<HolidayReminderScheduler>().scheduleNextReminder()
     }
 }

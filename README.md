@@ -116,6 +116,11 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 
 设置页面由 `SettingsActivity` 承载，使用 `zhanghai/ComposePreference` 构建。
 
+当前“提醒通知”部分包含：
+
+- 调休与节假日提醒开关（默认关闭）。
+- 提醒时间设置（默认前一天 20:00）。
+
 当前“节假日数据”部分包含：
 
 - 云端数据地址配置。
@@ -137,7 +142,7 @@ https://raw.githubusercontent.com/Pixel-Tailor-CN/PixelSnooze/refs/heads/main/js
 - 通知监听权限需要用户在系统设置中手动授予。
 - 应用逻辑只处理目标时钟应用通知。
 - 关键词、跳过按钮文本、休息日规则、临时休息状态、云端节假日数据地址、调休日历缓存和执行记录保存在本地。
-- Android 13 及以上的通知权限只用于显示临时休息状态通知；拒绝权限不影响休息日判断。
+- Android 13 及以上的通知权限用于显示临时休息状态通知和调休/节假日提醒；拒绝权限不影响休息日判断。
 - 应用不会主动上传通知内容、用户设置或执行记录。
 - 保存自定义云端节假日数据地址或手动更新调休日历时，会请求用户当前配置的 `holiday.json`。
 
@@ -213,6 +218,9 @@ app/src/main/java/vip/mystery0/pixel/snooze
 - `RestSchedulePreferencesRepository`：使用 `SharedPreferences` 保存用户选择的休息日规则和自定义日期。
 - `TemporaryRestManager`：统一管理临时休息状态变更，并同步状态通知和快捷设置磁贴。
 - `TemporaryRestPreferencesRepository`：使用 `SharedPreferences` 保存临时休息模式和结束日期。
+- `HolidayReminderScheduler`：管理调休与节假日提醒定时任务的安排与取消。
+- `HolidayReminderReceiver`：接收定时和系统广播，检查明日作息并在命中时发送通知。
+- `HolidayReminderNotification`：构建并展示明日调休上班或节假日休息的提醒通知。
 - `LocalFirstHolidayDataSource`：优先读取本地缓存，缓存不存在或无效时回退到内置 assets 数据；保存自定义数据地址或手动更新时拉取云端数据并写入本地缓存。
 - `AssetHolidayDataSource`：解析内置或缓存的 `holiday.json`。
 - `UserPreferencesRepository`：使用 `SharedPreferences` 保存关键词、跳过按钮文本和云端节假日数据地址。

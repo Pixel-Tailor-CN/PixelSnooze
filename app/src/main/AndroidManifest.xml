@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".PixelSnoozeApplication"
@@ -44,6 +45,16 @@
         <receiver
             android:name=".temporaryrest.TemporaryRestActionReceiver"
             android:exported="false" />
+
+        <receiver
+            android:name=".reminder.HolidayReminderReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="vip.mystery0.pixel.snooze.action.REMINDER_CHECK" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SettingsActivity"

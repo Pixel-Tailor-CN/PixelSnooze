@@ -66,12 +66,40 @@ class UserPreferencesRepository(context: Context) {
         preferences.edit { putBoolean(KEY_ONBOARDING_GUIDE_SEEN, true) }
     }
 
+    fun isHolidayReminderEnabled(): Boolean {
+        return preferences.getBoolean(KEY_HOLIDAY_REMINDER_ENABLED, false)
+    }
+
+    fun updateHolidayReminderEnabled(enabled: Boolean) {
+        preferences.edit { putBoolean(KEY_HOLIDAY_REMINDER_ENABLED, enabled) }
+    }
+
+    fun holidayReminderHour(): Int {
+        return preferences.getInt(KEY_HOLIDAY_REMINDER_HOUR, DEFAULT_REMINDER_HOUR)
+    }
+
+    fun holidayReminderMinute(): Int {
+        return preferences.getInt(KEY_HOLIDAY_REMINDER_MINUTE, DEFAULT_REMINDER_MINUTE)
+    }
+
+    fun updateHolidayReminderTime(hour: Int, minute: Int) {
+        preferences.edit {
+            putInt(KEY_HOLIDAY_REMINDER_HOUR, hour)
+            putInt(KEY_HOLIDAY_REMINDER_MINUTE, minute)
+        }
+    }
+
     companion object {
         const val DEFAULT_KEYWORD = "节假日闹钟"
+        const val DEFAULT_REMINDER_HOUR = 20
+        const val DEFAULT_REMINDER_MINUTE = 0
         private const val KEY_ALARM_KEYWORD = "alarm_keyword"
         private const val KEY_DISMISS_WORDS = "dismiss_words"
         private const val KEY_HOLIDAY_DATA_URL = "holiday_data_url"
         private const val KEY_ONBOARDING_GUIDE_SEEN = "onboarding_guide_seen"
+        private const val KEY_HOLIDAY_REMINDER_ENABLED = "holiday_reminder_enabled"
+        private const val KEY_HOLIDAY_REMINDER_HOUR = "holiday_reminder_hour"
+        private const val KEY_HOLIDAY_REMINDER_MINUTE = "holiday_reminder_minute"
     }
 }
 
