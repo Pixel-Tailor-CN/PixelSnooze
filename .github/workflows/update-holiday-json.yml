@@ -58,6 +58,7 @@ jobs:
 
           for year in years:
               holidays = set()
+              workdays = set()
               url = SOURCE_URL.format(year=year)
               try:
                   payload = fetch_holiday_data(url)
@@ -68,20 +69,23 @@ jobs:
                   raise
 
               for day in payload.get("days", []):
-                  if not day.get("isOffDay"):
-                      continue
                   date = day.get("date")
                   if not date:
                       continue
                   parsed_date = datetime.date.fromisoformat(date)
-                  if parsed_date.year == year:
+                  if parsed_date.year != year:
+                      continue
+                  if day.get("isOffDay"):
                       holidays.add(date)
+                  else:
+                      workdays.add(date)
 
-              if not holidays:
+              if not holidays and not workdays:
                   print(f"No holiday data for year: {year}")
               output.append({
                   "year": year,
                   "holidays": sorted(holidays),
+                  "workdays": sorted(workdays),
               })
 
           if not output:
